@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class GridMover : MonoBehaviour
 {
+    /*
     public GridBehavior grid;
     public float speed = 3f;
 
@@ -38,4 +39,5 @@ public class GridMover : MonoBehaviour
         currentIndex = 0;
         moving = true;
     }
+    */
 }

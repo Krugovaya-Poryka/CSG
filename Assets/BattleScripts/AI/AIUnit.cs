@@ -3,29 +3,17 @@ using UnityEngine;
 public class AIUnit : MonoBehaviour
 {
     private string aiName;
-
     private AIManager.AIDifficulty difficulty;
-
     private int currentHealth = 100;
-
     private int maxHealth = 100;
-
     private Vector3 currentPosition;
-
     private int attackDamage = 10;
-
     private float attackRange = 5f;
-
     private float visionRange = 15f;
-
     private float moveSpeed = 3f;
-
     private bool isAlive = true;
-
     private bool isTakingTurn = false;
-
     private bool isReadyForNextTurn = true;
-
     private int turnCount = 0;
 
     public void Initialize(string name, AIManager.AIDifficulty aiDifficulty, Vector3 startPosition)
@@ -39,11 +27,11 @@ public class AIUnit : MonoBehaviour
         gameObject.name = $"AI_{name}";
         transform.position = startPosition;
         
-        Debug.Log($"<color=green>✓ AIUnit '{aiName}' ініціалізований</color>");
-        Debug.Log($"  - Складність: {difficulty}");
-        Debug.Log($"  - Здоров'я: {currentHealth}/{maxHealth}");
-        Debug.Log($"  - Шкода: {attackDamage}");
-        Debug.Log($"  - Позиція: {currentPosition}");
+        Debug.Log($"<color=green>[+] AIUnit '{aiName}' initialized</color>");
+        Debug.Log($"  - Difficulty: {difficulty}");
+        Debug.Log($"  - Health: {currentHealth}/{maxHealth}");
+        Debug.Log($"  - Damage: {attackDamage}");
+        Debug.Log($"  - Position: {currentPosition}");
     }
 
     private void SetupByDifficulty(AIManager.AIDifficulty aiDifficulty)
@@ -56,7 +44,7 @@ public class AIUnit : MonoBehaviour
                 currentHealth = maxHealth;
                 visionRange = 10f;
                 moveSpeed = 2f;
-                Debug.Log("<color=yellow>⚙ Складність EASY: AttackDamage=5, Health=60, VisionRange=10</color>");
+                Debug.Log("<color=yellow>[CONFIG] EASY: Damage=5, HP=60, Vision=10</color>");
                 break;
                 
             case AIManager.AIDifficulty.Normal:
@@ -65,7 +53,7 @@ public class AIUnit : MonoBehaviour
                 currentHealth = maxHealth;
                 visionRange = 15f;
                 moveSpeed = 3f;
-                Debug.Log("<color=yellow>⚙ Складність NORMAL: AttackDamage=10, Health=100, VisionRange=15</color>");
+                Debug.Log("<color=yellow>[CONFIG] NORMAL: Damage=10, HP=100, Vision=15</color>");
                 break;
                 
             case AIManager.AIDifficulty.Hard:
@@ -74,7 +62,7 @@ public class AIUnit : MonoBehaviour
                 currentHealth = maxHealth;
                 visionRange = 20f;
                 moveSpeed = 4f;
-                Debug.Log("<color=yellow>⚙ Складність HARD: AttackDamage=15, Health=150, VisionRange=20</color>");
+                Debug.Log("<color=yellow>[CONFIG] HARD: Damage=15, HP=150, Vision=20</color>");
                 break;
         }
     }
@@ -82,13 +70,13 @@ public class AIUnit : MonoBehaviour
     public string AnalyzeBattlefield()
     {
         if (!isAlive)
-            return "Не можу аналізувати - я мертва!";
+            return "Cannot analyze: dead";
         
-        string analysis = $"[AI {aiName}] Аналізую поле бою...\n";
-        analysis += $"  - Позиція: {currentPosition}\n";
-        analysis += $"  - Здоров'я: {currentHealth}/{maxHealth}\n";
-        analysis += $"  - Радіус видення: {visionRange}\n";
-        analysis += $"  - Складність: {difficulty}\n";
+        string analysis = $"[AI {aiName}] Analyzing battlefield...\n";
+        analysis += $"  - Position: {currentPosition}\n";
+        analysis += $"  - Health: {currentHealth}/{maxHealth}\n";
+        analysis += $"  - Vision: {visionRange}\n";
+        analysis += $"  - Difficulty: {difficulty}\n";
         
         Debug.Log($"<color=cyan>{analysis}</color>");
         return analysis;
@@ -97,16 +85,15 @@ public class AIUnit : MonoBehaviour
     public bool CanSeeTarget(Vector3 targetPosition)
     {
         float distanceToTarget = Vector3.Distance(currentPosition, targetPosition);
-        
         bool canSee = distanceToTarget <= visionRange;
         
         if (canSee)
         {
-            Debug.Log($"<color=green>👀 {aiName} бачить ворога! Дистанція: {distanceToTarget:F2}</color>");
+            Debug.Log($"<color=green>[VISION] {aiName} sees target! Distance: {distanceToTarget:F2}</color>");
         }
         else
         {
-            Debug.Log($"<color=red>❌ {aiName} не бачить ворога! Дистанція: {distanceToTarget:F2} (>vidrange:{visionRange})</color>");
+            Debug.Log($"<color=red>[VISION] {aiName} cannot see target! Distance: {distanceToTarget:F2} (> Range: {visionRange})</color>");
         }
         
         return canSee;
@@ -116,7 +103,7 @@ public class AIUnit : MonoBehaviour
     {
         if (enemyPositions.Length == 0)
         {
-            Debug.LogWarning($"<color=orange>⚠ {aiName}: немає ворогів для вибору!</color>");
+            Debug.LogWarning($"<color=orange>[!] {aiName}: No targets available!</color>");
             return Vector3.zero;
         }
         
@@ -133,7 +120,7 @@ public class AIUnit : MonoBehaviour
             }
         }
         
-        Debug.Log($"<color=yellow>🎯 {aiName} обирає ціль на відстані {closestDistance:F2}</color>");
+        Debug.Log($"<color=yellow>[TARGET] {aiName} selected target at distance {closestDistance:F2}</color>");
         return bestTarget;
     }
 
@@ -141,42 +128,37 @@ public class AIUnit : MonoBehaviour
     {
         if (!isAlive)
         {
-            Debug.LogError($"<color=red>✗ {aiName} не можу рухатися - я мертва!</color>");
+            Debug.LogError($"<color=red>[-] {aiName} cannot move: dead</color>");
             return;
         }
 
         Vector3 direction = (targetPosition - currentPosition).normalized;
-
         currentPosition += direction * moveSpeed * Time.deltaTime;
-
         transform.position = currentPosition;
 
         float distanceToTarget = Vector3.Distance(currentPosition, targetPosition);
-        
-        Debug.Log($"<color=cyan">🚶 {aiName} рухається до цілі (дистанція: {distanceToTarget:F2})</color>");
+        Debug.Log($"<color=cyan>[MOVE] {aiName} moving to target (Distance: {distanceToTarget:F2})</color>");
     }
 
     public int Attack(Vector3 targetPosition)
     {
         if (!isAlive)
         {
-            Debug.LogError($"<color=red>✗ {aiName} не можу атакувати - я мертва!</color>");
+            Debug.LogError($"<color=red>[-] {aiName} cannot attack: dead</color>");
             return 0;
         }
 
         float distanceToTarget = Vector3.Distance(currentPosition, targetPosition);
-        
         if (distanceToTarget > attackRange)
         {
-            Debug.LogWarning($"<color=orange>⚠ {aiName}: ворог занадто далеко! (дистанція: {distanceToTarget:F2} > attackRange: {attackRange})</color>");
+            Debug.LogWarning($"<color=orange>[!] {aiName}: Target out of range! ({distanceToTarget:F2} > {attackRange})</color>");
             return 0;
         }
 
         int actualDamage = attackDamage + Random.Range(-2, 3);
         actualDamage = Mathf.Max(1, actualDamage);
         
-        Debug.Log($"<color=red>⚔ {aiName} атакує! Нанесена шкода: {actualDamage}</color>");
-        
+        Debug.Log($"<color=red>[ATTACK] {aiName} attacks! Damage dealt: {actualDamage}</color>");
         return actualDamage;
     }
 
@@ -184,21 +166,19 @@ public class AIUnit : MonoBehaviour
     {
         if (!isAlive)
         {
-            Debug.LogError($"<color=red>✗ {aiName} не може робити хід - мертва!</color>");
+            Debug.LogError($"<color=red>[-] {aiName} cannot take turn: dead</color>");
             return;
         }
         
         isTakingTurn = true;
         turnCount++;
-        
-        Debug.Log($"<color=green">▶ {aiName} починає хід #{turnCount}</color>");
+        Debug.Log($"<color=green>[TURN] {aiName} started turn #{turnCount}</color>");
     }
 
     public void EndTurn()
     {
         isTakingTurn = false;
-        
-        Debug.Log($"<color=magenta>⏹ {aiName} завершив хід</color>");
+        Debug.Log($"<color=magenta>[TURN] {aiName} ended turn</color>");
     }
 
     public void TakeDamage(int damageAmount)
@@ -207,8 +187,7 @@ public class AIUnit : MonoBehaviour
             return;
         
         currentHealth -= damageAmount;
-        
-        Debug.Log($"<color=red">💥 {aiName} отримав {damageAmount} шкоди! Здоров'я: {currentHealth}/{maxHealth}</color>");
+        Debug.Log($"<color=red>[DAMAGE] {aiName} took {damageAmount} damage! Health: {currentHealth}/{maxHealth}</color>");
 
         if (currentHealth <= 0)
         {
@@ -222,39 +201,29 @@ public class AIUnit : MonoBehaviour
             return;
         
         currentHealth += healAmount;
-        currentHealth = Mathf.Min(currentHealth, maxHealth); // Макс = maxHealth
-        
-        Debug.Log($"<color=green">💚 {aiName} вилікований на {healAmount}! Здоров'я: {currentHealth}/{maxHealth}</color>");
+        currentHealth = Mathf.Min(currentHealth, maxHealth);
+        Debug.Log($"<color=green>[HEAL] {aiName} healed for {healAmount}! Health: {currentHealth}/{maxHealth}</color>");
     }
 
     public void Die()
     {
         isAlive = false;
         isTakingTurn = false;
-        
-        Debug.Log($"<color=red">☠ {aiName} ЗАГИНУВ!</color>");
+        Debug.Log($"<color=red>[DEAD] {aiName} has been destroyed!</color>");
     }
 
     public string GetName() => aiName;
-
     public int GetHealth() => currentHealth;
-
     public int GetMaxHealth() => maxHealth;
-
     public Vector3 GetPosition() => currentPosition;
-
     public int GetAttackDamage() => attackDamage;
-
     public float GetAttackRange() => attackRange;
-
     public bool IsAlive() => isAlive;
-
     public bool IsTakingTurn() => isTakingTurn;
-
     public int GetTurnCount() => turnCount;
 
     public string GetStatus()
     {
-        return $"[{aiName}] Здоров'я: {currentHealth}/{maxHealth}, Ходи: {turnCount}, Жива: {isAlive}";
+        return $"[{aiName}] HP: {currentHealth}/{maxHealth}, Turns: {turnCount}, Alive: {isAlive}";
     }
 }

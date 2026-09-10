@@ -308,9 +308,26 @@ MonoBehaviour:
   - {fileID: 7071876222525385644, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   - {fileID: 7071876222525385644, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   roadSprites: []
+  forestCenter: {fileID: -773593759, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestTop: {fileID: -1942526944, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestBottom: {fileID: -1235985089, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestLeft: {fileID: -1228127077, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestRight: {fileID: -1159469188, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestTopLeft: {fileID: 2006153663, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestTopRight: {fileID: -423358074, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestBottomLeft: {fileID: -865049544, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestBottomRight: {fileID: -21396030, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  forestTree: {fileID: 1451014614, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   swampSprites: []
-  waterSprites:
-  - {fileID: 50498369, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterCenter: {fileID: 50498369, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterTop: {fileID: 451610234, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterBottom: {fileID: 34912871, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterLeft: {fileID: -171384303, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterRight: {fileID: 11547220, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterTopLeft: {fileID: 385663501, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterTopRight: {fileID: -827291659, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterBottomLeft: {fileID: -1612947378, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterBottomRight: {fileID: 1360625856, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
 --- !u!61 &8749822451023933138
 BoxCollider2D:
   m_ObjectHideFlags: 0

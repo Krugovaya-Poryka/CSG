@@ -47,21 +47,11 @@ public class GridBehavior : MonoBehaviour
         {
             for (int y = 0; y < rows; y++)
             {
-                float value = Mathf.PerlinNoise(
-                    (x + seedOffsetX) * noiseScale,
-                    (y + seedOffsetY) * noiseScale
-                );
+                float value = Mathf.PerlinNoise((x + seedOffsetX) * noiseScale, (y + seedOffsetY) * noiseScale);
 
-                Vector2 worldPosition = new Vector2(
-                    leftBottomLocation.x + scale * x,
-                    leftBottomLocation.y + scale * y
-                );
+                Vector2 worldPosition = new Vector2(leftBottomLocation.x + scale * x, leftBottomLocation.y + scale * y);
 
-                GameObject obj = Instantiate(
-                    gridPrefab,
-                    worldPosition,
-                    Quaternion.identity
-                );
+                GameObject obj = Instantiate(gridPrefab, worldPosition, Quaternion.identity);
 
                 obj.transform.SetParent(transform);
 
@@ -81,8 +71,7 @@ public class GridBehavior : MonoBehaviour
                 stat.y = y;
                 stat.grid = this;
 
-                // Генерація типу землі
-                if (value < 0.30f)
+                if (value < 0.35f)
                 {
                     stat.tileType = GridStat.TileType.Water;
                 }
@@ -105,9 +94,25 @@ public class GridBehavior : MonoBehaviour
                 gridArray[x, y] = obj;
             }
         }
+        UpdateAllTileSprites();   
     }
+    
+    private void UpdateAllTileSprites()
+    {
+        for (int x = 0; x < columns; x++)
+        {
+            for (int y = 0; y < rows; y++)
+            {
+                GridStat tile = GetTile(x, y);
 
-    // Повертає клітинку за координатами
+                if (tile != null)
+                    tile.UpdateSpriteByNeighbours();
+            }
+        }
+    }
+    
+    
+
     public GridStat GetTile(int x, int y)
     {
         if (x < 0 || x >= columns ||
@@ -124,7 +129,6 @@ public class GridBehavior : MonoBehaviour
         return gridArray[x, y].GetComponent<GridStat>();
     }
 
-    // Повертає сусідні клітинки в 8 напрямках
     public List<GridStat> GetNeighbours(GridStat tile)
     {
         List<GridStat> neighbours = new List<GridStat>();
@@ -145,9 +149,6 @@ public class GridBehavior : MonoBehaviour
                 if (neighbour == null)
                     continue;
 
-                // Перевіряємо діагональний рух.
-                // Не дозволяємо проходити крізь кут
-                // між двома непрохідними клітинками.
                 if (offsetX != 0 && offsetY != 0)
                 {
                     GridStat horizontal =
@@ -172,7 +173,6 @@ public class GridBehavior : MonoBehaviour
         return neighbours;
     }
 
-    // Перетворює позицію у світі в координати клітинки
     public Vector2Int WorldToGrid(Vector3 worldPosition)
     {
         int x = Mathf.RoundToInt(

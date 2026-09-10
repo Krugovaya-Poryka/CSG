@@ -69,10 +69,7 @@ public static class Pathfinder
 
                 int movementCost = neighbour.movementCost;
 
-                // Діагональний рух трохи дорожчий
-                bool diagonal =
-                    neighbour.x != current.tile.x &&
-                    neighbour.y != current.tile.y;
+                bool diagonal = neighbour.x != current.tile.x && neighbour.y != current.tile.y;
 
                 int stepCost = movementCost * 10;
 
@@ -133,7 +130,6 @@ public static class Pathfinder
         int dx = Mathf.Abs(a.x - b.x);
         int dy = Mathf.Abs(a.y - b.y);
 
-        // Octile distance для 8 напрямків
         int diagonal = Mathf.Min(dx, dy);
         int straight = Mathf.Abs(dx - dy);
 

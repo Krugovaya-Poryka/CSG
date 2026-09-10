@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
-  m_Name: angelData
+  m_Name: gogData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
   unitName: 
   unitIcon: {fileID: 0}
-  maxHealth: 200
-  attack: 20
-  defense: 15
+  attack: 6
+  defense: 4
   minDamage: 2
   maxDamage: 4
-  speed: 12
-  isRanged: 0
+  maxHealth: 13
+  speed: 4
+  isRanged: 1
   isFlyer: 0
-  maxShots: 1
+  maxShots: 12
   retaliationsCount: 1

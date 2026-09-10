@@ -7,11 +7,11 @@ public class UnitData : ScriptableObject
     public Sprite unitIcon;
 
     [Header("Базові характеристики")]
-    public int maxHealth = 10;
     public int attack = 5;
     public int defense = 5;
     public int minDamage = 2;
     public int maxDamage = 4;
+    public int maxHealth = 10;
 
     [Header("Переміщення та Ініціатива")]
     public int speed = 6; // Швидкість визначає і дальність ходу на гексах, і чергу в бою!

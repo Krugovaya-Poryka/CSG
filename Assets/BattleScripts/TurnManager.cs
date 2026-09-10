@@ -5,76 +5,74 @@ using UnityEngine;
 public class TurnManager : MonoBehaviour
 {
     public List<BattleUnit> allUnits = new List<BattleUnit>();
-    private List<BattleUnit> turnQueue = new List<BattleUnit>();
-
-    public BattleUnit activeUnit { get; private set; }
-    public int currentRound = 0;
+    public BattleUnit activeUnit;
+    private int currentUnitIndex = 0;
 
     public void StartBattle()
     {
-        currentRound = 0;
-        StartNewRound();
+        // 1. Сортуємо юнітів за швидкістю (найшвидші ходять першими)
+        SortUnitsBySpeed();
+        currentUnitIndex = 0;
+        StartTurn();
     }
 
-    public void StartNewRound()
+    public void StartTurn()
     {
-        currentRound++;
-        Debug.Log($"<color=yellow>=== СТАРТ РАУНДУ {currentRound} ===</color>");
+        // 1. Очищаємо список від знищених юнітів
+        allUnits.RemoveAll(u => u == null || u.stackSize <= 0);
 
-        foreach (var unit in allUnits)
+        // 2. Перевіряємо, чи не закінчився бій
+        if (CheckBattleEnd()) return;
+
+        // 3. Якщо пройшли всі юніти — починається новий раунд
+        if (currentUnitIndex >= allUnits.Count)
         {
-            if (unit.stackSize > 0)
-                unit.ResetForNewRound();
+            currentUnitIndex = 0;
+
+            // Пересортовуємо за швидкістю на новий раунд
+            SortUnitsBySpeed();
+
+            // Відновлюємо контратаки для кожного юніта відповідно до його UnitData
+            foreach (var u in allUnits)
+            {
+                if (u != null) u.ResetRoundData();
+            }
+
+            Debug.Log("================ ПОЧАТОК НОВОГО РАУНДУ ================");
         }
 
-        BuildTurnQueue();
-        NextTurn();
+        // 4. Встановлюємо активного юніта
+        activeUnit = allUnits[currentUnitIndex];
+        Debug.Log($"---> ХІД: {activeUnit.data.unitName} (Команда {activeUnit.teamId}, Швидкість {activeUnit.data.speed})");
     }
 
-    private void BuildTurnQueue()
+    public void EndTurn()
     {
-        // Використовуємо C# LINQ для сортування (аналог std::sort в C++)
-        // Сортуємо за Speed (за спаданням), а при рівності — за TeamId (0 ходитиме першим)
-        turnQueue = allUnits
-            .Where(u => u.stackSize > 0 && !u.hasTakenTurn)
-            .OrderByDescending(u => u.data.speed)
-            .ThenBy(u => u.teamId)
-            .ToList();
+        currentUnitIndex++;
+        StartTurn();
     }
 
-    public void NextTurn()
+    private void SortUnitsBySpeed()
     {
-        // Видаляємо вже мертвих зі списку
-        turnQueue.RemoveAll(u => u.stackSize <= 0);
-
-        if (turnQueue.Count == 0)
-        {
-            if (CheckBattleEnd()) return;
-
-            StartNewRound();
-            return;
-        }
-
-        activeUnit = turnQueue[0];
-        turnQueue.RemoveAt(0);
-        activeUnit.hasTakenTurn = true;
-
-        Debug.Log($"Зараз ходить: {activeUnit.data.unitName} (Команда: {activeUnit.teamId}, Швидкість: {activeUnit.data.speed})");
-
-        // Тут підсвічуємо гекси на відстані activeUnit.data.speed для гравця
+        allUnits = allUnits.OrderByDescending(u => u.data.speed).ToList();
     }
 
     private bool CheckBattleEnd()
     {
-        bool team0Alive = allUnits.Any(u => u.teamId == 0 && u.stackSize > 0);
-        bool team1Alive = allUnits.Any(u => u.teamId == 1 && u.stackSize > 0);
+        int team0Count = allUnits.Count(u => u.teamId == 0 && u.stackSize > 0);
+        int team1Count = allUnits.Count(u => u.teamId == 1 && u.stackSize > 0);
 
-        if (!team0Alive || !team1Alive)
+        if (team0Count == 0)
         {
-            int winner = team0Alive ? 0 : 1;
-            Debug.Log($"<color=green>Бій завершено! Перемогла команда {winner}</color>");
+            Debug.Log("=== БІЙ ЗАВЕРШЕНО: ПЕРЕМОГА ВОРОГА! ===");
             return true;
         }
+        if (team1Count == 0)
+        {
+            Debug.Log("=== БІЙ ЗАВЕРШЕНО: ПЕРЕМОГА ГРАВЦЯ! ===");
+            return true;
+        }
+
         return false;
     }
 }

@@ -1,91 +1,159 @@
+using System.Collections;
 using UnityEngine;
 
 public class BattleUnit : MonoBehaviour
 {
-    public UnitData data; // Посилання на конфіг з базовими статами
+    public UnitData data;
+    public int stackSize;
+    public int currentHealth; // Здоров'я верхньої істоти в стеку
+    public int teamId;
+    public Vector2Int hexCoords;
 
-    [Header("Поточний стан стеку")]
-    public int stackSize = 10;          // Кількість юнітів у загоні (напр. 10 Пікінерів)
-    public int currentTopUnitHP;        // Здоров'я верхнього (пораненого) юніта
-    public Vector2Int hexCoords;        // Позиція на гексагональній сітці (q, r)
-    public int teamId;                  // 0 = Нападаючий, 1 = Захисник
-
-    [Header("Стан у раунді")]
-    public int remainingRetaliations;   // Скільки контратак залишилося в цьому раунді
-    public bool hasTakenTurn;           // Чи ходив юніт у цьому раунді
+    public int remainingRetaliations;
+    public int currentShots;
 
     public void Init(UnitData unitData, int count, int team)
     {
         data = unitData;
         stackSize = count;
-        currentTopUnitHP = data.maxHealth;
         teamId = team;
-        ResetForNewRound();
+        currentHealth = data.maxHealth;
+        currentShots = data.maxShots;
+        remainingRetaliations = data.retaliationsCount;
     }
 
-    public void ResetForNewRound()
+    public void ResetRoundData()
     {
         remainingRetaliations = data.retaliationsCount;
-        hasTakenTurn = false;
     }
 
-    // Математика шкоди як у Heroes of Might and Magic 3
-    public int CalculateDamageTo(BattleUnit target)
+    // Формула розрахунку шкоди HOMM3
+    public int CalculateDamageTo(BattleUnit target, bool isMeleePenalty = false)
     {
-        // 1. Базова шкода стеку
-        int rawDamage = 0;
+        // 1. Сумуємо базова шкоду для кожного юніта в стеку
+        int baseDamageSum = 0;
         for (int i = 0; i < stackSize; i++)
         {
-            rawDamage += Random.Range(data.minDamage, data.maxDamage + 1);
+            baseDamageSum += Random.Range(data.minDamage, data.maxDamage + 1);
         }
 
-        // 2. Модифікатор Атака vs Захист
+        // 2. Модифікатор Атаки проти Захисту
         float modifier = 1.0f;
-        int diff = data.attack - target.data.defense;
 
-        if (diff > 0)
+        if (data.attack > target.data.defense)
         {
-            // Якщо Атака > Захисту: +5% за кожну одиницю різниці (макс +300%)
-            modifier += diff * 0.05f;
-            if (modifier > 4.0f) modifier = 4.0f;
+            // +5% шкоди за кожну одиницю переваги атаки (макс. +300%)
+            float bonus = (data.attack - target.data.defense) * 0.05f;
+            modifier += Mathf.Min(bonus, 3.0f);
         }
-        else if (diff < 0)
+        else if (data.attack < target.data.defense)
         {
-            // Якщо Атака < Захисту: -2.5% за кожну одиницю (макс -80%)
-            modifier += diff * 0.025f;
-            if (modifier < 0.2f) modifier = 0.2f;
+            // -2.5% шкоди за кожну одиницю переваги захисту (мін. 30% підсумкової шкоди)
+            float penalty = (target.data.defense - data.attack) * 0.025f;
+            modifier -= penalty;
+            modifier = Mathf.Max(modifier, 0.3f);
         }
 
-        return Mathf.Max(1, Mathf.RoundToInt(rawDamage * modifier));
+        // 3. Штраф рукопашної для стрільців (-50%)
+        if (isMeleePenalty)
+        {
+            modifier *= 0.5f;
+        }
+
+        return Mathf.Max(1, Mathf.RoundToInt(baseDamageSum * modifier));
     }
 
-    // Отримання шкоди та перерахунок стеку
+    public void MeleeAttack(BattleUnit target, System.Action onComplete)
+    {
+        bool hasMeleePenalty = data.isRanged;
+        int damage = CalculateDamageTo(target, hasMeleePenalty);
+
+        Debug.Log($"{data.unitName} б'є {target.data.unitName} на {damage} шкоди!");
+        target.TakeDamage(damage);
+
+        // Контратака (якщо ціль вижила і має дозволені контратаки)
+        if (target.stackSize > 0 && target.remainingRetaliations > 0)
+        {
+            int retDamage = target.CalculateDamageTo(this);
+            Debug.Log($"{target.data.unitName} контратакує на {retDamage} шкоди!");
+            TakeDamage(retDamage);
+            target.remainingRetaliations--;
+        }
+
+        onComplete?.Invoke();
+    }
+
+    public void RangedAttack(BattleUnit target, System.Action onComplete)
+    {
+        if (currentShots <= 0)
+        {
+            Debug.Log("Немає пострілів!");
+            onComplete?.Invoke();
+            return;
+        }
+
+        currentShots--;
+        int damage = CalculateDamageTo(target);
+
+        Debug.Log($"{data.unitName} стріляє в {target.data.unitName} на {damage} шкоди! (Залишилося пострілів: {currentShots})");
+        target.TakeDamage(damage);
+
+        onComplete?.Invoke();
+    }
+
     public void TakeDamage(int damage)
     {
-        // Рахуємо сумарне здоров'я всього стеку
-        int totalStackHP = (stackSize - 1) * data.maxHealth + currentTopUnitHP;
-        totalStackHP -= damage;
+        int totalDamage = damage;
 
-        if (totalStackHP <= 0)
+        // Попоштучне зняття HP та вибивання юнітів зі стеку
+        while (totalDamage > 0 && stackSize > 0)
+        {
+            if (totalDamage < currentHealth)
+            {
+                currentHealth -= totalDamage;
+                totalDamage = 0;
+            }
+            else
+            {
+                totalDamage -= currentHealth;
+                stackSize--;
+                currentHealth = data.maxHealth;
+            }
+        }
+
+        if (stackSize <= 0)
         {
             stackSize = 0;
-            currentTopUnitHP = 0;
             Die();
         }
-        else
-        {
-            // Оновлюємо кількість живих юнітів
-            stackSize = Mathf.CeilToInt((float)totalStackHP / data.maxHealth);
-            currentTopUnitHP = totalStackHP % data.maxHealth;
-            if (currentTopUnitHP == 0) currentTopUnitHP = data.maxHealth;
-        }
-
-        Debug.Log($"{data.unitName} отримав {damage} шкоди. Залишилося в стеку: {stackSize}");
     }
 
     private void Die()
     {
-        Debug.Log($"Стек {data.unitName} повністю знищено!");
-        gameObject.SetActive(false); // У грі тут запускається анімація смерті
+        Debug.Log($"{data.unitName} знищено!");
+
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null) col.enabled = false;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null) sr.color = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+
+        gameObject.name += "_Corpse";
+    }
+
+    public IEnumerator MoveToHex(GameObject targetHex, Vector2Int newCoords, System.Action onComplete)
+    {
+        Vector3 targetPos = targetHex.transform.position;
+        targetPos.z = transform.position.z;
+
+        while (Vector3.Distance(transform.position, targetPos) > 0.05f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, 8f * Time.deltaTime);
+            yield return null;
+        }
+
+        transform.position = targetPos;
+        hexCoords = newCoords;
+        onComplete?.Invoke();
     }
 }

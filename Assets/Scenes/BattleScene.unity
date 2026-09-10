@@ -119,6 +119,66 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &106131930
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 106131931}
+  - component: {fileID: 106131932}
+  m_Layer: 0
+  m_Name: PlayerHero
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &106131931
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 106131930}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.1822, y: -0.26533, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &106131932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 106131930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cc1629f36f23754a824eb3609986bbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroArmy
+  heroName: Christian
+  slots:
+  - unitData: {fileID: 11400000, guid: 326d6952528a13f49a2a78ba7690ce1a, type: 2}
+    count: 20
+  - unitData: {fileID: 11400000, guid: 202b8a55eef6e95498e8241cde202fb5, type: 2}
+    count: 5
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
 --- !u!1 &509450152
 GameObject:
   m_ObjectHideFlags: 0
@@ -206,7 +266,7 @@ Transform:
   m_GameObject: {fileID: 509450152}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 6, y: 4, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -266,6 +326,8 @@ GameObject:
   m_Component:
   - component: {fileID: 694079529}
   - component: {fileID: 694079530}
+  - component: {fileID: 694079531}
+  - component: {fileID: 694079532}
   m_Layer: 0
   m_Name: BattleController
   m_TagString: Untagged
@@ -301,7 +363,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnManager
   allUnits: []
-  currentRound: 0
+  activeUnit: {fileID: 0}
+--- !u!114 &694079531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 694079528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a0bb7b9dcdd90f41af56465f3f564e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleSetup
+  gridManager: {fileID: 1813272377}
+  turnManager: {fileID: 694079530}
+  unitPrefab: {fileID: 5269898582269975629, guid: db1211272d258aa4bb88853a3795b09c, type: 3}
+  playerHero: {fileID: 106131932}
+  enemyHero: {fileID: 2055661408}
+--- !u!114 &694079532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 694079528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d5ae1ab0f78e3b4992e9a8b54e36519, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleInputHandler
+  turnManager: {fileID: 694079530}
+  moveHighlightColor: {r: 0.7019608, g: 0.69411767, b: 0.6862745, a: 0.8235294}
 --- !u!1 &1813272375
 GameObject:
   m_ObjectHideFlags: 0
@@ -351,6 +444,66 @@ MonoBehaviour:
   hexPrefab: {fileID: 8239344644054241640, guid: 82ffec918ceed914e9efd1333ce17c30, type: 3}
   hexWidth: 0.866
   hexHeight: 1
+--- !u!1 &2055661406
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2055661407}
+  - component: {fileID: 2055661408}
+  m_Layer: 0
+  m_Name: EnemyHero
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2055661407
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055661406}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.1822, y: -0.26533, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2055661408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055661406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cc1629f36f23754a824eb3609986bbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroArmy
+  heroName: Christian
+  slots:
+  - unitData: {fileID: 11400000, guid: 8b7a4f9fbc6497d4bb8e6c24411d7c45, type: 2}
+    count: 20
+  - unitData: {fileID: 11400000, guid: 742b2c25cec2e1c49810f7ff27904448, type: 2}
+    count: 10
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -358,3 +511,5 @@ SceneRoots:
   - {fileID: 509450155}
   - {fileID: 694079529}
   - {fileID: 1813272376}
+  - {fileID: 106131931}
+  - {fileID: 2055661407}

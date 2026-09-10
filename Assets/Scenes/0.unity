@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -254,8 +255,24 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1898789915}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d5f90840041f59739120c54dd68f5a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  moveSpeed: 15
+  zoomSpeed: 0.01
+  minZoom: 3
+  maxZoom: 15
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -394,19 +411,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridBehavior
   seed: 123
-  obstacleChance: 0.2
-  mover: {fileID: 1898789916}
-  findDistance: 0
   rows: 10
   columns: 10
   scale: 1
   gridPrefab: {fileID: 7530165658295749732, guid: 15ee2c9c8d51babb6941d9e13caf9d09, type: 3}
   leftBottomLocation: {x: 0, y: 0}
-  startX: 0
-  startY: 0
-  endX: 0
-  endY: 0
-  path: []
+  noiseScale: 0.1
 --- !u!4 &908126256
 Transform:
   m_ObjectHideFlags: 0
@@ -422,6 +432,51 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1725703931
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1725703932}
+  - component: {fileID: 1725703933}
+  m_Layer: 0
+  m_Name: Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1725703932
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1725703931}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.36044, y: -0.15195, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1725703933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1725703931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 798e8551a1eeab2be8245649a28dc513, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroSelectionManager
+  selectedHero: {fileID: 1898789917}
 --- !u!1 &1898789913
 GameObject:
   m_ObjectHideFlags: 0
@@ -433,6 +488,7 @@ GameObject:
   - component: {fileID: 1898789915}
   - component: {fileID: 1898789914}
   - component: {fileID: 1898789916}
+  - component: {fileID: 1898789917}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -512,8 +568,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 519420032}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1898789916
@@ -528,12 +583,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8804ffe2cda96140a0ee89209f2806e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridMover
+--- !u!114 &1898789917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898789913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98e76c628acd3b4b79530937e10ac3a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroController
   grid: {fileID: 908126255}
-  speed: 3
+  maxMovementPoints: 30
+  movementPoints: 30
+  moveSpeed: 4
+  gridX: 0
+  gridY: 0
+  selected: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 908126256}
   - {fileID: 1898789915}
+  - {fileID: 1725703932}

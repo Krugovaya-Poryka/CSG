@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class HexGridManager : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class HexGridManager : MonoBehaviour
 
     public GameObject[,] gridArray;
 
-    void Start()
+    void Awake()
     {
         GenerateHexGrid();
     }
@@ -52,5 +53,36 @@ public class HexGridManager : MonoBehaviour
                 gridArray[q, r] = hex;
             }
         }
+    }
+
+    public List<GameObject> GetHexNeighbors(int q, int r)
+    {
+        List<GameObject> neighbors = new List<GameObject>();
+
+        // «суви залежать в≥д парност≥ р€дка r
+        bool isOdd = (r % 2 != 0);
+
+        Vector2Int[] offsets = isOdd ? new Vector2Int[] {
+        new Vector2Int(1, 0), new Vector2Int(-1, 0),
+        new Vector2Int(0, 1), new Vector2Int(0, -1),
+        new Vector2Int(1, 1), new Vector2Int(1, -1)
+    } : new Vector2Int[] {
+        new Vector2Int(1, 0), new Vector2Int(-1, 0),
+        new Vector2Int(0, 1), new Vector2Int(0, -1),
+        new Vector2Int(-1, 1), new Vector2Int(-1, -1)
+    };
+
+        foreach (var offset in offsets)
+        {
+            int nQ = q + offset.x;
+            int nR = r + offset.y;
+
+            if (nQ >= 0 && nQ < columns && nR >= 0 && nR < rows)
+            {
+                neighbors.Add(gridArray[nQ, nR]);
+            }
+        }
+
+        return neighbors;
     }
 }

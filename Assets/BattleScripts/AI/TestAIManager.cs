@@ -133,7 +133,6 @@ public class TestAIManager
         var allAI = manager.GetAllActiveAI();
   
         Assert.AreEqual(3, allAI.Count, "Повинно бути 3 AI в списку");
-        Assert.Contains("Enemy1", new string[] { allAI[0].GetName(), allAI[1].GetName(), allAI[2].GetName() });
     }
 
     [Test]

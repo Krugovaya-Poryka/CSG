@@ -110,7 +110,7 @@ public class TestAIUnit
 
         bool canSee = aiUnit.CanSeeTarget(targetPosition);
 
-        Assert.IsTrue(canSee, "AI повинна бачити ворога в радіусі видення");
+        Assert.IsTrue(canSee, "AI повинна бачити ворога в радіусі бачення");
     }
 
     [Test]
@@ -121,7 +121,7 @@ public class TestAIUnit
 
         bool canSee = aiUnit.CanSeeTarget(targetPosition);
 
-        Assert.IsFalse(canSee, "AI не повинна бачити ворога поза радіусом видення");
+        Assert.IsFalse(canSee, "AI не повинна бачити ворога поза радіусом бачення");
     }
 
     [Test]
@@ -149,7 +149,7 @@ public class TestAIUnit
 
         Vector3 selectedTarget = aiUnit.ChooseTarget(enemies);
 
-        Assert.AreEqual(enemy, selectedTarget, "Повинна бути обрана єдиний ворог");
+        Assert.AreEqual(enemy, selectedTarget, "Повинен бути обраний єдиний ворог");
     }
 
     [Test]
@@ -223,8 +223,8 @@ public class TestAIUnit
         string status = aiUnit.GetStatus();
         
         Assert.IsNotEmpty(status, "Статус не повинен бути пустим");
-        Assert.Contains("TestAI", status, "Статус повинен містити ім'я AI");
-        Assert.Contains("100", status, "Статус повинен містити здоров'я");
+        StringAssert.Contains("TestAI", status, "Статус повинен містити ім'я AI");
+        StringAssert.Contains("100", status, "Статус повинен містити здоров'я");
     }
     
     [Test]

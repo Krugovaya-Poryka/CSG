@@ -11,7 +11,7 @@ public class AIManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindObjectOfType<AIManager>();
+                instance = FindFirstObjectByType<AIManager>();
 
                 if (instance == null)
                 {

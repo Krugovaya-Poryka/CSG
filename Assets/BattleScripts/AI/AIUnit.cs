@@ -13,7 +13,6 @@ public class AIUnit : MonoBehaviour
     private float moveSpeed = 3f;
     private bool isAlive = true;
     private bool isTakingTurn = false;
-    private bool isReadyForNextTurn = true;
     private int turnCount = 0;
 
     public void Initialize(string name, AIManager.AIDifficulty aiDifficulty, Vector3 startPosition)

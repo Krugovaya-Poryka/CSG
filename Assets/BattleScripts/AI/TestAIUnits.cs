@@ -23,7 +23,6 @@ public class TestAIUnit
     [Test]
     public void TestAIInitialization()
     {
-
         string name = aiUnit.GetName();
 
         Assert.AreEqual("TestAI", name, "Ім'я AI повинно бути 'TestAI'");
@@ -118,7 +117,7 @@ public class TestAIUnit
     public void TestCannotSeeTargetOutOfRange()
     {
         Vector3 aiPosition = aiUnit.GetPosition();
-        Vector3 targetPosition = aiPosition + Vector3.forward * 100f; // 100 одиниць - занадто далеко
+        Vector3 targetPosition = aiPosition + Vector3.forward * 100f;
 
         bool canSee = aiUnit.CanSeeTarget(targetPosition);
 

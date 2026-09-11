@@ -3,7 +3,6 @@ using UnityEngine;
 
 public static class HexPathfinding
 {
-    // Отримання 6 сусідніх гексів для сітки типу Even-R (популярний формат)
     public static List<Vector2Int> GetNeighbors(Vector2Int hex)
     {
         List<Vector2Int> neighbors = new List<Vector2Int>();
@@ -27,7 +26,6 @@ public static class HexPathfinding
         return neighbors;
     }
 
-    // Пошук досяжних гексів за допомогою BFS
     public static Dictionary<Vector2Int, Vector2Int> FindReachableArea(
         Vector2Int start,
         int speed,
@@ -36,9 +34,6 @@ public static class HexPathfinding
     {
         var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
         cameFrom[start] = start;
-
-        // Для літаючих юнітів обхід перешкод не потрібен
-        if (isFlyer) return cameFrom;
 
         Queue<Vector2Int> frontier = new Queue<Vector2Int>();
         frontier.Enqueue(start);
@@ -54,8 +49,9 @@ public static class HexPathfinding
 
             foreach (Vector2Int next in GetNeighbors(current))
             {
-                // Наземні юніти не можуть проходити крізь перешкоди або інших юнітів
-                if (blockedHexes.Contains(next)) continue;
+                // Наземні юніти не можуть проходити крізь перешкоди/юнітів.
+                // Літаючі юніти ігнорують перешкоди ПІД ЧАС переміщення.
+                if (!isFlyer && blockedHexes.Contains(next)) continue;
 
                 int newCost = costSoFar[current] + 1;
                 if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
@@ -70,7 +66,6 @@ public static class HexPathfinding
         return cameFrom;
     }
 
-    // Відтворення списку точок шляху від старту до цілі
     public static List<Vector2Int> ReconstructPath(
         Vector2Int start,
         Vector2Int target,
@@ -81,11 +76,11 @@ public static class HexPathfinding
 
         if (isFlyer)
         {
-            path.Add(target); // Літун летить по прямій напряму до цілі
+            path.Add(target);
             return path;
         }
 
-        if (!cameFrom.ContainsKey(target)) return path; // Шлях недосяжний
+        if (!cameFrom.ContainsKey(target)) return path;
 
         Vector2Int current = target;
         while (current != start)

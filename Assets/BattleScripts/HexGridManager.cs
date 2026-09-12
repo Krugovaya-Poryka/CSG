@@ -18,11 +18,94 @@ public class HexGridManager : MonoBehaviour
 
     public GameObject[,] gridArray;
 
+    [Header("Налаштування сітки ліній")]
+    public Color gridLineColor = new Color(0f, 0f, 0f, 1f); // Колір сітки
+    public float gridLineWidth = 0.05f;                       // Товщина лінії
+    public Material lineMaterial;                             // Матеріал (наприклад, Sprites/Default)
+
     void Awake()
     {  
         obstacleCount = Random.Range(0, 10);
         GenerateHexGrid();
         GenerateObstacles();
+        DrawGridLines();
+    }
+
+    void DrawGridLines()
+    {
+        GameObject linesParent = new GameObject("GridLines");
+        linesParent.transform.SetParent(transform);
+
+        // Хеш-сет для збереження вже намальованих граней (усуває подвійну товщину)
+        HashSet<(Vector2Int, Vector2Int)> drawnEdges = new HashSet<(Vector2Int, Vector2Int)>();
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int q = 0; q < columns; q++)
+            {
+                Vector2 center = gridArray[q, r].transform.position;
+                Vector2[] corners = GetHexCorners(center);
+
+                for (int i = 0; i < 6; i++)
+                {
+                    Vector2 p1 = corners[i];
+                    Vector2 p2 = corners[(i + 1) % 6];
+
+                    // Округлюємо координати для виключення помилок float
+                    Vector2Int ip1 = new Vector2Int(Mathf.RoundToInt(p1.x * 1000f), Mathf.RoundToInt(p1.y * 1000f));
+                    Vector2Int ip2 = new Vector2Int(Mathf.RoundToInt(p2.x * 1000f), Mathf.RoundToInt(p2.y * 1000f));
+
+                    // Канонічний ключ відрізка (p1 завжди "менше" p2)
+                    var edgeKey = (ip1.x < ip2.x || (ip1.x == ip2.x && ip1.y < ip2.y))
+                        ? (ip1, ip2)
+                        : (ip2, ip1);
+
+                    if (!drawnEdges.Contains(edgeKey))
+                    {
+                        drawnEdges.Add(edgeKey);
+                        CreateLineSegment(p1, p2, linesParent.transform);
+                    }
+                }
+            }
+        }
+    }
+
+    Vector2[] GetHexCorners(Vector2 center)
+    {
+        Vector2[] corners = new Vector2[6];
+        float radius = hexHeight / 2.0f;
+
+        for (int i = 0; i < 6; i++)
+        {
+            // 30, 90, 150... градусів для Pointy-Topped гексів HOMM3
+            float angleDeg = 60f * i + 30f;
+            float angleRad = angleDeg * Mathf.Deg2Rad;
+
+            corners[i] = new Vector2(
+                center.x + radius * Mathf.Cos(angleRad),
+                center.y + radius * Mathf.Sin(angleRad)
+            );
+        }
+        return corners;
+    }
+
+    void CreateLineSegment(Vector2 p1, Vector2 p2, Transform parent)
+    {
+        GameObject lineObj = new GameObject("GridEdge");
+        lineObj.transform.SetParent(parent);
+
+        LineRenderer lr = lineObj.AddComponent<LineRenderer>();
+        lr.material = lineMaterial != null ? lineMaterial : new Material(Shader.Find("Sprites/Default"));
+        lr.startColor = gridLineColor;
+        lr.endColor = gridLineColor;
+        lr.startWidth = gridLineWidth;
+        lr.endWidth = gridLineWidth;
+        lr.positionCount = 2;
+        lr.useWorldSpace = true;
+
+        // Z = -0.01f виносить лінію трохи вперед перед спрайтами гексів
+        lr.SetPosition(0, new Vector3(p1.x, p1.y, -0.01f));
+        lr.SetPosition(1, new Vector3(p2.x, p2.y, -0.01f));
     }
 
     void GenerateHexGrid()

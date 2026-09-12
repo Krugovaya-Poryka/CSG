@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
   m_Name: griffinData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
-  unitName: 
-  unitIcon: {fileID: 0}
+  unitName: "\u0413\u0440\u0438\u0444\u043E\u043D\u0438"
+  idleSprite: {fileID: 2607527289711766512, guid: 101ef11decd2ccd46b9509aa08cc5174, type: 3}
+  attackSprite: {fileID: 5861535894414267662, guid: d30fb2e61b461144fa595a96dabc6a30, type: 3}
   attack: 8
   defense: 8
   minDamage: 3

@@ -4,7 +4,10 @@ using UnityEngine;
 public class UnitData : ScriptableObject
 {
     public string unitName;
-    public Sprite unitIcon;
+
+    [Header("Спрайти")]
+    public Sprite idleSprite;   // Текстура у спокої
+    public Sprite attackSprite; // Текстура під час атаки
 
     [Header("Базові характеристики")]
     public int attack = 5;
@@ -12,8 +15,6 @@ public class UnitData : ScriptableObject
     public int minDamage = 2;
     public int maxDamage = 4;
     public int maxHealth = 10;
-
-    [Header("Переміщення та Ініціатива")]
     public int speed = 6; // Швидкість визначає і дальність ходу на гексах, і чергу в бою!
 
     [Header("Особливості")]

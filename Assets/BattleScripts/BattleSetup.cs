@@ -91,11 +91,10 @@ public class BattleSetup : MonoBehaviour
                 bUnit.hexCoords = new Vector2Int(targetColumn, row);
             }
 
-            if (teamId == 1)
+            if (teamId == 1 && bUnit != null)
             {
-                Vector3 scale = unitObj.transform.localScale;
-                scale.x *= -1;
-                unitObj.transform.localScale = scale;
+                // Одразу розвертаємо текстуру ворога ліворуч при спавні
+                bUnit.FaceTarget(bUnit.transform.position + Vector3.left);
             }
 
             if (turnManager != null)

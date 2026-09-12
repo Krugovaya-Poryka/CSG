@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
   m_Name: swordsmanData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
-  unitName: 
-  unitIcon: {fileID: 0}
+  unitName: "\u041C\u0435\u0447\u043D\u0438\u043A\u0438"
+  idleSprite: {fileID: -307252040755512792, guid: 62b0be2c937c62f45a9e98587879fbf3, type: 3}
+  attackSprite: {fileID: -2065911277292590261, guid: bced96834bf07a24b96fa6d2aaeb6679, type: 3}
   attack: 10
   defense: 12
   minDamage: 6

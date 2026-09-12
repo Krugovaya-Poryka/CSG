@@ -44,7 +44,8 @@ public class BattleInputHandler : MonoBehaviour
 
             foreach (var hit in hits)
             {
-                if (clickedUnit == null) clickedUnit = hit.collider.GetComponent<BattleUnit>();
+                // ЎукаЇмо BattleUnit на батьк≥вському об'Їкт≥, оск≥льки колайдер висить на Texture
+                if (clickedUnit == null) clickedUnit = hit.collider.GetComponentInParent<BattleUnit>();
                 if (clickedHex == null) clickedHex = hit.collider.GetComponent<GridStat>();
             }
 

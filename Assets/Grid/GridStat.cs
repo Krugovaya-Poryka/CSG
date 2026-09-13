@@ -10,7 +10,8 @@ public class GridStat : MonoBehaviour
     public TMP_Text coordinateText;
     public GridBehavior grid;
     public int movementCost;
-
+    public bool canCastleSpawn = false;
+    public GameObject castlePrefab;
 
     public enum TileType
     {
@@ -23,10 +24,29 @@ public class GridStat : MonoBehaviour
         Forest,
         Water
     }
+
+    public enum Objective
+    {
+        Castle
+    }
+
+    public Sprite castleSprite;
+    
     public TileType tileType;
     
     public Sprite[] grassSprites;
-    public Sprite[] roadSprites;
+    
+    public Sprite roadCenter;    
+    public Sprite roadTop;
+    public Sprite roadBottom;
+    public Sprite roadLeft;
+    public Sprite roadRight;
+    public Sprite roadTopLeft;
+    public Sprite roadTopRight;
+    public Sprite roadBottomLeft;
+    public Sprite roadBottomRight;
+    public Sprite roadBottomLeftRight;
+    public Sprite roadTopLeftRight;  
     
     public Sprite forestCenter;
     public Sprite forestTop;
@@ -65,7 +85,7 @@ public class GridStat : MonoBehaviour
             case TileType.Grass:
                 walkable = true;
                 movementCost = 2;
-
+                canCastleSpawn = true;
                 if (grassSprites.Length > 0)
                     spriteRenderer.sprite =
                         grassSprites[Random.Range(0, grassSprites.Length)];
@@ -75,11 +95,6 @@ public class GridStat : MonoBehaviour
             case TileType.Road:
                 walkable = true;
                 movementCost = 1;
-
-                if (roadSprites.Length > 0)
-                    spriteRenderer.sprite =
-                        roadSprites[Random.Range(0, roadSprites.Length)];
-
                 break;
 
             case TileType.Swamp:
@@ -87,8 +102,7 @@ public class GridStat : MonoBehaviour
                 movementCost = 4;
 
                 if (swampSprites.Length > 0)
-                    spriteRenderer.sprite =
-                        swampSprites[Random.Range(0, swampSprites.Length)];
+                    spriteRenderer.sprite = swampSprites[Random.Range(0, swampSprites.Length)];
 
                 break;
 
@@ -119,6 +133,11 @@ public class GridStat : MonoBehaviour
         }
     }
 
+    public void BuildCastle()
+    {
+        GameObject castle = Instantiate(castlePrefab, transform.position, Quaternion.identity, transform);
+    }
+
     public void UpdateSpriteByNeighbours()
     {
         if (tileType == TileType.Water)
@@ -130,14 +149,89 @@ public class GridStat : MonoBehaviour
         {
             UpdateForestSprite();
         }
+        if (tileType == TileType.Road)
+        {
+            UpdateRoadSprite();
+        }
+        
+    }
+    
+    private void UpdateRoadSprite()
+    {
+        bool grassTop = !CheckTile(x, y + 1, TileType.Road);
+        bool grassBottom = !CheckTile(x, y - 1, TileType.Road);
+        bool grassLeft = !CheckTile(x - 1, y, TileType.Road);
+        bool grassRight = !CheckTile(x + 1, y, TileType.Road);
+
+        if (grassTop && grassLeft && grassRight)
+        {
+            spriteRenderer.sprite = roadTopLeftRight;
+            return;
+        }
+
+        if (grassBottom && grassLeft && grassRight)
+        {
+            spriteRenderer.sprite = roadBottomLeftRight;
+            return;
+        }
+
+        if (grassTop && grassLeft)
+        {
+            spriteRenderer.sprite = roadTopLeft;
+            return;
+        }
+
+        if (grassTop && grassRight)
+        {
+            spriteRenderer.sprite = roadTopRight;
+            return;
+        }
+
+        if (grassBottom && grassLeft)
+        {
+            spriteRenderer.sprite = roadBottomLeft;
+            return;
+        }
+
+        if (grassBottom && grassRight)
+        {
+            spriteRenderer.sprite = roadBottomRight;
+            return;
+        }
+
+        if (grassTop)
+        {
+            spriteRenderer.sprite = roadTop;
+            return;
+        }
+
+        if (grassBottom)
+        {
+            spriteRenderer.sprite = roadBottom;
+            return;
+        }
+
+        if (grassLeft)
+        {
+            spriteRenderer.sprite = roadLeft;
+            return;
+        }
+
+        if (grassRight)
+        {
+            spriteRenderer.sprite = roadRight;
+            return;
+        }
+    
+        spriteRenderer.sprite = roadCenter;
     }
     
     private void UpdateWaterSprite()
     {
-        bool grassTop = IsNotWater(x, y + 1);
-        bool grassBottom = IsNotWater(x, y - 1);
-        bool grassLeft = IsNotWater(x - 1, y);
-        bool grassRight = IsNotWater(x + 1, y);
+        bool grassTop = CheckTile(x, y + 1, TileType.Water);
+        bool grassBottom = CheckTile(x, y - 1, TileType.Water);
+        bool grassLeft = CheckTile(x - 1, y, TileType.Water);
+        bool grassRight = CheckTile(x + 1, y, TileType.Water);
 
         if (grassTop && grassLeft)
         {
@@ -190,22 +284,13 @@ public class GridStat : MonoBehaviour
         spriteRenderer.sprite = waterCenter;
     }
     
-    private bool IsNotWater(int checkX, int checkY)
-    {
-        GridStat neighbour = grid.GetTile(checkX, checkY);
-
-        if (neighbour == null)
-            return false;
-
-        return neighbour.tileType == TileType.Grass;
-    }
     
     private void UpdateForestSprite()
     {
-        bool emptyTop = IsNotForest(x, y + 1);
-        bool emptyBottom = IsNotForest(x, y - 1);
-        bool emptyLeft = IsNotForest(x - 1, y);
-        bool emptyRight = IsNotForest(x + 1, y);
+        bool emptyTop = CheckTile(x, y + 1, TileType.Forest);
+        bool emptyBottom = CheckTile(x, y - 1, TileType.Forest);
+        bool emptyLeft = CheckTile(x - 1, y, TileType.Forest);
+        bool emptyRight = CheckTile(x + 1, y, TileType.Forest);
 
         if (emptyRight && emptyBottom && emptyLeft && emptyTop)
         {
@@ -266,14 +351,14 @@ public class GridStat : MonoBehaviour
         spriteRenderer.sprite = forestCenter;
     }
     
-    private bool IsNotForest(int checkX, int checkY)
+    public bool CheckTile(int checkX, int checkY, TileType tile)
     {
         GridStat neighbour = grid.GetTile(checkX, checkY);
         
         if(neighbour == null)
-            return false;
+            return true;
         
-        return neighbour.tileType == TileType.Grass;
+        return neighbour.tileType != tile;
     }
     
     public void UpdateText()

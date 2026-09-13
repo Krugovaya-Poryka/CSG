@@ -295,6 +295,9 @@ MonoBehaviour:
   coordinateText: {fileID: 4006462592959618859}
   grid: {fileID: 0}
   movementCost: 3
+  canCastleSpawn: 0
+  castlePrefab: {fileID: 2131950527133385890, guid: 80fffedb39512c71282e0fdb0fcfdfa5, type: 3}
+  castleSprite: {fileID: -755483095, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   tileType: 0
   grassSprites:
   - {fileID: 7071876222525385644, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
@@ -307,7 +310,17 @@ MonoBehaviour:
   - {fileID: 7071876222525385644, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   - {fileID: 7071876222525385644, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   - {fileID: 7071876222525385644, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
-  roadSprites: []
+  roadCenter: {fileID: -1725593827, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadTop: {fileID: -34297276, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottom: {fileID: -34297276, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadLeft: {fileID: -1725593827, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadRight: {fileID: -1725593827, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadTopLeft: {fileID: 703584986, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadTopRight: {fileID: -378829725, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottomLeft: {fileID: -974775363, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottomRight: {fileID: -1663583903, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottomLeftRight: {fileID: 168098245, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadTopLeftRight: {fileID: -634149434, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   forestCenter: {fileID: -773593759, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   forestTop: {fileID: -1942526944, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   forestBottom: {fileID: -1235985089, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}

@@ -6,6 +6,8 @@ public class HeroSelectionManager : MonoBehaviour
 
     public HeroController selectedHero;
 
+    public HeroUI heroUI;
+
     private void Awake()
     {
         Instance = this;
@@ -21,6 +23,9 @@ public class HeroSelectionManager : MonoBehaviour
         if (selectedHero != null)
             selectedHero.selected = true;
 
+        if (heroUI != null)
+            heroUI.ShowHero(selectedHero);
+
         Debug.Log("Selected hero: " + hero.name);
     }
 
@@ -30,5 +35,14 @@ public class HeroSelectionManager : MonoBehaviour
             return;
 
         selectedHero.MoveTo(target);
+    }
+    public void EndTurn()
+    {
+        HeroController[] heroes = FindObjectsByType<HeroController>(FindObjectsSortMode.None);
+
+        foreach (HeroController hero in heroes)
+        {
+            hero.ResetMovement();
+        }
     }
 }

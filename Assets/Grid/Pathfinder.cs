@@ -19,7 +19,8 @@ public static class Pathfinder
         int startX,
         int startY,
         int targetX,
-        int targetY)
+        int targetY,
+        bool allowDiagonal = true)
     {
         GridStat startTile = grid.GetTile(startX, startY);
         GridStat targetTile = grid.GetTile(targetX, targetY);
@@ -56,7 +57,11 @@ public static class Pathfinder
             openList.Remove(current);
             closedSet.Add(current.tile);
 
-            foreach (GridStat neighbour in grid.GetNeighbours(current.tile))
+            List<GridStat> neighbours = allowDiagonal
+                ? grid.GetNeighbours(current.tile)
+                : grid.GetRoadNeighbours(current.tile);
+
+            foreach (GridStat neighbour in neighbours)
             {
                 if (neighbour == null)
                     continue;
@@ -68,9 +73,7 @@ public static class Pathfinder
                     continue;
 
                 int movementCost = neighbour.movementCost;
-
                 bool diagonal = neighbour.x != current.tile.x && neighbour.y != current.tile.y;
-
                 int stepCost = movementCost * 10;
 
                 if (diagonal)

@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
   m_Name: spearmanData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
-  unitName: 
-  unitIcon: {fileID: 0}
+  unitName: "\u0421\u043F\u0438\u0441\u043D\u0438\u043A\u0438"
+  idleSprite: {fileID: 1098381309998613055, guid: 614d86a8db82ffb40bdee4686c346f3f, type: 3}
+  attackSprite: {fileID: -2300439445977238271, guid: f9e0783b88da58848821bc4dda011021, type: 3}
   attack: 4
   defense: 5
   minDamage: 1

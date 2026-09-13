@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
   m_Name: archerData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
-  unitName: 
-  unitIcon: {fileID: 0}
+  unitName: "\u0410\u0440\u0431\u0430\u043B\u0435\u0442\u043D\u0438\u043A\u0438"
+  idleSprite: {fileID: -8809141100493659975, guid: 8bafe2f191f7dd34187bc037122f6203, type: 3}
+  attackSprite: {fileID: 3233904660866982071, guid: 4c1f27834c1a73840b7a154a2675021f, type: 3}
   attack: 6
   defense: 3
   minDamage: 2

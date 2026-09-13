@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
+using TMPro;
 
 public class BattleUnit : MonoBehaviour
 {
@@ -16,6 +18,7 @@ public class BattleUnit : MonoBehaviour
     public SpriteRenderer unitSprite;   // Посилання на SpriteRenderer на дочірньому Texture
     public Transform textureChild;      // Дочірній об'єкт Texture
     public GameObject damageTextPrefab; // Префаб випливаючого тексту
+    public TMP_Text stackText; // Посилання на текст кількості юнітів
 
     public void Init(UnitData unitData, int count, int team)
     {
@@ -26,14 +29,57 @@ public class BattleUnit : MonoBehaviour
         currentShots = data.maxShots;
         remainingRetaliations = data.retaliationsCount;
 
-        // Автоматично шукаємо SpriteRenderer, якщо не призначено в Inspector
         if (unitSprite == null) unitSprite = GetComponentInChildren<SpriteRenderer>();
         if (textureChild == null) textureChild = transform.Find("Texture");
 
-        // Встановлюємо початковий Idle спрайт
+        // Автоматичний пошук тексту, якщо забули перетягнути в Inspector
+        if (stackText == null) stackText = GetComponentInChildren<TMP_Text>();
+
         if (unitSprite != null && data != null && data.idleSprite != null)
         {
             unitSprite.sprite = data.idleSprite;
+        }
+
+        UpdateStackText();
+    }
+
+    public void UpdateStackText()
+    {
+        if (stackText != null)
+        {
+            stackText.text = stackSize.ToString();
+
+            // Якщо стек знищено — ховаємо текст
+            stackText.gameObject.SetActive(stackSize > 0);
+        }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        ShowDamageText(damage);
+
+        int totalDamage = damage;
+        while (totalDamage > 0 && stackSize > 0)
+        {
+            if (totalDamage < currentHealth)
+            {
+                currentHealth -= totalDamage;
+                totalDamage = 0;
+            }
+            else
+            {
+                totalDamage -= currentHealth;
+                stackSize--;
+                currentHealth = data.maxHealth;
+            }
+        }
+
+        UpdateStackText();
+
+        if (stackSize <= 0)
+        {
+            stackSize = 0;
+            Die();
         }
     }
 
@@ -183,37 +229,16 @@ public class BattleUnit : MonoBehaviour
         return Mathf.Max(1, Mathf.RoundToInt(baseDamageSum * modifier));
     }
 
-    public void TakeDamage(int damage)
-    {
-        ShowDamageText(damage);
-
-        int totalDamage = damage;
-        while (totalDamage > 0 && stackSize > 0)
-        {
-            if (totalDamage < currentHealth)
-            {
-                currentHealth -= totalDamage;
-                totalDamage = 0;
-            }
-            else
-            {
-                totalDamage -= currentHealth;
-                stackSize--;
-                currentHealth = data.maxHealth;
-            }
-        }
-
-        if (stackSize <= 0)
-        {
-            stackSize = 0;
-            Die();
-        }
-    }
-
+    // Замініть ShowDamageText у BattleUnit.cs
     private void ShowDamageText(int amount)
     {
-        if (damageTextPrefab == null) return;
+        if (damageTextPrefab == null)
+        {
+            Debug.LogWarning($"[BattleUnit] damageTextPrefab не призначений у префабі {gameObject.name}!");
+            return;
+        }
 
+        // Z = -1f виносить текст вперед перед спрайтами
         Vector3 spawnPos = transform.position + new Vector3(0, 0.8f, -1f);
         GameObject textObj = Instantiate(damageTextPrefab, spawnPos, Quaternion.identity);
 
@@ -222,6 +247,29 @@ public class BattleUnit : MonoBehaviour
         {
             floatingText.Setup(amount);
         }
+    }
+
+    // Додайте цей новий метод переміщення у BattleUnit.cs (замість старого MoveToHex)
+    public IEnumerator MoveAlongPath(List<GameObject> path, Vector2Int finalCoords, System.Action onComplete)
+    {
+        foreach (GameObject hexObj in path)
+        {
+            FaceTarget(hexObj.transform.position);
+
+            Vector3 targetPos = hexObj.transform.position;
+            targetPos.z = transform.position.z;
+
+            while (Vector3.Distance(transform.position, targetPos) > 0.05f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, targetPos, 8f * Time.deltaTime);
+                yield return null;
+            }
+
+            transform.position = targetPos;
+        }
+
+        hexCoords = finalCoords;
+        onComplete?.Invoke();
     }
 
     private void Die()

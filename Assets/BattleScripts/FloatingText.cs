@@ -3,16 +3,19 @@ using TMPro;
 
 public class FloatingText : MonoBehaviour
 {
-    public float moveSpeed = 1.5f; // Швидкість підняття вгору
-    public float fadeSpeed = 1.5f; // Швидкість зникнення
-    public float lifetime = 1.0f;  // Час життя об'єкта в секундах
+    public float moveSpeed = 1.5f;
+    public float fadeSpeed = 1.5f;
+    public float lifetime = 1.0f;
 
-    private TextMeshPro textMesh;
+    private TMP_Text textMesh;
     private Color textColor;
 
     public void Setup(int damageAmount)
     {
-        textMesh = GetComponent<TextMeshPro>();
+        // Шукаємо компонент будь-якого типу TextMeshPro
+        textMesh = GetComponent<TMP_Text>();
+        if (textMesh == null) textMesh = GetComponentInChildren<TMP_Text>();
+
         if (textMesh != null)
         {
             textMesh.text = $"-{damageAmount}";
@@ -24,10 +27,8 @@ public class FloatingText : MonoBehaviour
 
     void Update()
     {
-        // Повільний рух вгору
         transform.position += new Vector3(0, moveSpeed * Time.deltaTime, 0);
 
-        // Плавне зменшення прозорості (Alpha)
         if (textMesh != null)
         {
             textColor.a -= fadeSpeed * Time.deltaTime;

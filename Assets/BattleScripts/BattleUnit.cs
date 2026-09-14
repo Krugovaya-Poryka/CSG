@@ -14,6 +14,8 @@ public class BattleUnit : MonoBehaviour
     public int remainingRetaliations;
     public int currentShots;
 
+    public int initialStackSize;
+
     [Header("Візуалізація")]
     public SpriteRenderer unitSprite;   // Посилання на SpriteRenderer на дочірньому Texture
     public Transform textureChild;      // Дочірній об'єкт Texture
@@ -24,6 +26,7 @@ public class BattleUnit : MonoBehaviour
     {
         data = unitData;
         stackSize = count;
+        initialStackSize = count;
         teamId = team;
         currentHealth = data.maxHealth;
         currentShots = data.maxShots;

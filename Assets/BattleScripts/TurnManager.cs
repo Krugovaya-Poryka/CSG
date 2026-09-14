@@ -5,12 +5,15 @@ using UnityEngine;
 public class TurnManager : MonoBehaviour
 {
     public List<BattleUnit> allUnits = new List<BattleUnit>();
+    public List<BattleUnit> registeredUnits = new List<BattleUnit>(); // Зберігає всіх юнітів для підрахунку втрат
     public BattleUnit activeUnit;
     private int currentUnitIndex = 0;
 
+    public BattleResultUI resultUI; // Посилання на UI результатів
+
     public void StartBattle()
     {
-        // 1. Сортуємо юнітів за швидкістю (найшвидші ходять першими)
+        registeredUnits = new List<BattleUnit>(allUnits); // Фіксуємо всіх учасників
         SortUnitsBySpeed();
         currentUnitIndex = 0;
         StartTurn();
@@ -18,32 +21,22 @@ public class TurnManager : MonoBehaviour
 
     public void StartTurn()
     {
-        // 1. Очищаємо список від знищених юнітів
         allUnits.RemoveAll(u => u == null || u.stackSize <= 0);
 
-        // 2. Перевіряємо, чи не закінчився бій
         if (CheckBattleEnd()) return;
 
-        // 3. Якщо пройшли всі юніти — починається новий раунд
         if (currentUnitIndex >= allUnits.Count)
         {
             currentUnitIndex = 0;
-
-            // Пересортовуємо за швидкістю на новий раунд
             SortUnitsBySpeed();
 
-            // Відновлюємо контратаки для кожного юніта відповідно до його UnitData
             foreach (var u in allUnits)
             {
                 if (u != null) u.ResetRoundData();
             }
-
-            Debug.Log("================ ПОЧАТОК НОВОГО РАУНДУ ================");
         }
 
-        // 4. Встановлюємо активного юніта
         activeUnit = allUnits[currentUnitIndex];
-        Debug.Log($"---> ХІД: {activeUnit.data.unitName} (Команда {activeUnit.teamId}, Швидкість {activeUnit.data.speed})");
     }
 
     public void EndTurn()
@@ -62,14 +55,15 @@ public class TurnManager : MonoBehaviour
         int team0Count = allUnits.Count(u => u.teamId == 0 && u.stackSize > 0);
         int team1Count = allUnits.Count(u => u.teamId == 1 && u.stackSize > 0);
 
-        if (team0Count == 0)
+        if (team0Count == 0 || team1Count == 0)
         {
-            Debug.Log("=== БІЙ ЗАВЕРШЕНО: ПЕРЕМОГА ВОРОГА! ===");
-            return true;
-        }
-        if (team1Count == 0)
-        {
-            Debug.Log("=== БІЙ ЗАВЕРШЕНО: ПЕРЕМОГА ГРАВЦЯ! ===");
+            bool isPlayerVictory = (team1Count == 0);
+            activeUnit = null; // Фікс: обнуляємо активного юніта, щоб він більше не рухався!
+
+            if (resultUI != null)
+            {
+                resultUI.ShowResults(isPlayerVictory, registeredUnits);
+            }
             return true;
         }
 

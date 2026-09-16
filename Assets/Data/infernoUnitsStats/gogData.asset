@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
   m_Name: gogData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
-  unitName: 
-  unitIcon: {fileID: 0}
+  unitName: "\u0413\u043E\u0433\u0438"
+  idleSprite: {fileID: 45760429, guid: 1be664a1badf62049846dd162d8f30a4, type: 3}
+  attackSprite: {fileID: 387904283, guid: a9a4be8ff5ca3a3458a7044a02d409e1, type: 3}
   attack: 6
   defense: 4
   minDamage: 2

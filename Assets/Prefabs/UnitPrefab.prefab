@@ -471,9 +471,10 @@ MonoBehaviour:
   hexCoords: {x: 0, y: 0}
   remainingRetaliations: 0
   currentShots: 0
+  initialStackSize: 0
   unitSprite: {fileID: 8520794912863526436}
   textureChild: {fileID: 6856379423257205166}
-  damageTextPrefab: {fileID: 4410901277253242846, guid: 21c34a578a27cc64295e2e804d9de080, type: 3}
+  damageTextPrefab: {fileID: 4406528812544141523, guid: cb4550dc4d989bb4b80aec3d35372587, type: 3}
   stackText: {fileID: 6431387743601291296}
 --- !u!1 &5954841519135693690
 GameObject:

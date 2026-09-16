@@ -128,7 +128,7 @@ public class BattleUnit : MonoBehaviour
         // 2. Нанесення шкоди
         bool hasMeleePenalty = data.isRanged;
         int damage = CalculateDamageTo(target, hasMeleePenalty);
-        Debug.Log($"{data.unitName} б'є {target.data.unitName} на {damage} шкоди!");
+        if (BattleLogUI.Instance != null) BattleLogUI.Instance.LogAttack(this, target, damage);
         target.TakeDamage(damage);
 
         yield return new WaitForSeconds(0.25f); // Затримка показу кадру удару
@@ -157,7 +157,7 @@ public class BattleUnit : MonoBehaviour
         yield return new WaitForSeconds(0.15f);
 
         int retDamage = CalculateDamageTo(attacker);
-        Debug.Log($"{data.unitName} контратакує на {retDamage} шкоди!");
+        if (BattleLogUI.Instance != null) BattleLogUI.Instance.LogAttack(this, attacker, retDamage, true);
         attacker.TakeDamage(retDamage);
         remainingRetaliations--;
 
@@ -193,7 +193,7 @@ public class BattleUnit : MonoBehaviour
 
         // 2. Нанесення шкоди
         int damage = CalculateDamageTo(target);
-        Debug.Log($"{data.unitName} стріляє в {target.data.unitName} на {damage} шкоди!");
+        if (BattleLogUI.Instance != null) BattleLogUI.Instance.LogAttack(this, target, damage);
         target.TakeDamage(damage);
 
         yield return new WaitForSeconds(0.2f);
@@ -235,15 +235,18 @@ public class BattleUnit : MonoBehaviour
     // Замініть ShowDamageText у BattleUnit.cs
     private void ShowDamageText(int amount)
     {
-        if (damageTextPrefab == null)
-        {
-            Debug.LogWarning($"[BattleUnit] damageTextPrefab не призначений у префабі {gameObject.name}!");
-            return;
-        }
+        if (damageTextPrefab == null) return;
 
-        // Z = -1f виносить текст вперед перед спрайтами
-        Vector3 spawnPos = transform.position + new Vector3(0, 0.8f, -1f);
-        GameObject textObj = Instantiate(damageTextPrefab, spawnPos, Quaternion.identity);
+        // 1. Шукаємо головний Canvas на сцені
+        Canvas mainCanvas = FindFirstObjectByType<Canvas>();
+        if (mainCanvas == null) return;
+
+        // 2. Переводимо світову позицію юніта в екранну позицію Canvas
+        Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position + new Vector3(0, 1.5f, 0));
+
+        // 3. Спавнимо префаб як дочірній об'єкт Canvas
+        GameObject textObj = Instantiate(damageTextPrefab, mainCanvas.transform);
+        textObj.transform.position = screenPos;
 
         FloatingText floatingText = textObj.GetComponent<FloatingText>();
         if (floatingText != null)

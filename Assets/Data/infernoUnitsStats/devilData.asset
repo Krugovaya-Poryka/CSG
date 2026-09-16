@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be910bf0109c4054a8a187c848acfe9c, type: 3}
   m_Name: devilData
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
-  unitName: 
-  unitIcon: {fileID: 0}
+  unitName: "\u0414\u0438\u044F\u0432\u043E\u043B\u0438"
+  idleSprite: {fileID: -707885105, guid: 061f4fac552289245a2c1744f3e22519, type: 3}
+  attackSprite: {fileID: 578181400, guid: c95ee86021903be46915297ea37cbb59, type: 3}
   attack: 19
   defense: 21
   minDamage: 30

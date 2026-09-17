@@ -46,7 +46,10 @@ public class GridStat : MonoBehaviour
     public Sprite roadBottomLeft;
     public Sprite roadBottomRight;
     public Sprite roadBottomLeftRight;
-    public Sprite roadTopLeftRight;  
+    public Sprite roadTopLeftRight;
+    public Sprite roadBottomTopRight;
+    public Sprite roadBottomTopLeft;
+    public Sprite roadBottomTopLeftRight;
     
     public Sprite forestCenter;
     public Sprite forestTop;
@@ -70,6 +73,13 @@ public class GridStat : MonoBehaviour
     public Sprite waterTopRight;
     public Sprite waterBottomLeft;
     public Sprite waterBottomRight;
+    public Sprite waterDiagonalBottomRight;
+    public Sprite waterDiagonalBottomLeft;
+    public Sprite waterDiagonalTopRight;
+    public Sprite waterDiagonalTopLeft;
+
+
+
 
     private SpriteRenderer spriteRenderer;
     
@@ -133,9 +143,12 @@ public class GridStat : MonoBehaviour
         }
     }
 
-    public void BuildCastle()
+    public GameObject BuildCastle()
     {
-        GameObject castle = Instantiate(castlePrefab, transform.position, Quaternion.identity, transform);
+        if (castlePrefab == null)
+            return null;
+
+        return Instantiate(castlePrefab, transform.position, Quaternion.identity, transform);
     }
 
     public void UpdateSpriteByNeighbours()
@@ -163,6 +176,24 @@ public class GridStat : MonoBehaviour
         bool grassLeft = !CheckTile(x - 1, y, TileType.Road);
         bool grassRight = !CheckTile(x + 1, y, TileType.Road);
 
+        if (grassTop && grassBottom && grassRight && grassLeft)
+        {
+            spriteRenderer.sprite = roadBottomTopLeftRight;
+            return;
+        }
+        
+        if (grassTop && grassBottom && grassRight)
+        {
+            spriteRenderer.sprite = roadBottomTopRight;
+            return;
+        }
+
+        if (grassBottom && grassLeft && grassTop)
+        {
+            spriteRenderer.sprite = roadBottomTopLeft;
+            return;
+        }
+        
         if (grassTop && grassLeft && grassRight)
         {
             spriteRenderer.sprite = roadTopLeftRight;
@@ -232,6 +263,13 @@ public class GridStat : MonoBehaviour
         bool grassBottom = CheckTile(x, y - 1, TileType.Water);
         bool grassLeft = CheckTile(x - 1, y, TileType.Water);
         bool grassRight = CheckTile(x + 1, y, TileType.Water);
+        bool grassTopRight = CheckTile(x + 1, y + 1, TileType.Water);
+        bool grassTopLeft = CheckTile(x - 1, y + 1, TileType.Water);
+        bool grassBottomRight = CheckTile(x + 1, y - 1, TileType.Water);
+        bool grassBottomLeft = CheckTile(x - 1, y - 1, TileType.Water);
+
+
+
 
         if (grassTop && grassLeft)
         {
@@ -280,7 +318,30 @@ public class GridStat : MonoBehaviour
             spriteRenderer.sprite = waterRight;
             return;
         }
-    
+        if (grassTopRight)
+        {
+            spriteRenderer.sprite = waterDiagonalTopRight;
+            return;
+        }
+
+        if (grassTopLeft)
+        {
+            spriteRenderer.sprite = waterDiagonalTopLeft;
+            return;
+        }
+
+        if (grassBottomRight)
+        {
+            spriteRenderer.sprite = waterDiagonalBottomRight;
+            return;
+        }
+
+        if (grassBottomLeft)
+        {
+            spriteRenderer.sprite = waterDiagonalBottomLeft;
+            return;
+        }
+        
         spriteRenderer.sprite = waterCenter;
     }
     
@@ -359,6 +420,14 @@ public class GridStat : MonoBehaviour
             return true;
         
         return neighbour.tileType != tile;
+    }
+    
+    private void OnMouseDown()
+    {
+        if (!walkable)
+            return;
+
+        HeroSelectionManager.Instance.ClickTile(this);
     }
     
     public void UpdateText()

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class HeroSelectionManager : MonoBehaviour
 {
+    public GridStat selectedTarget;
     public static HeroSelectionManager Instance;
 
     public HeroController selectedHero;
@@ -13,6 +14,22 @@ public class HeroSelectionManager : MonoBehaviour
         Instance = this;
     }
 
+    public void ClickTile(GridStat target)
+    {
+        if (selectedHero == null)
+            return;
+
+        if (selectedTarget == target)
+        {
+            selectedHero.ConfirmMove();
+            selectedTarget = null;
+            return;
+        }
+
+        selectedTarget = target;
+        selectedHero.PreviewPath(target);
+    }
+    
     public void SelectHero(HeroController hero)
     {
         if (selectedHero != null)
@@ -34,8 +51,11 @@ public class HeroSelectionManager : MonoBehaviour
         if (selectedHero == null)
             return;
 
-        selectedHero.MoveTo(target);
+        ClickTile(target);
     }
+    
+
+    
     public void EndTurn()
     {
         HeroController[] heroes = FindObjectsByType<HeroController>(FindObjectsSortMode.None);

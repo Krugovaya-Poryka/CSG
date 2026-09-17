@@ -5,6 +5,10 @@ public class GridBehavior : MonoBehaviour
 {
     public int castleWidth = 3;
     public int castleHeight = 3;
+    public int nextTeamId = 0;
+    public GameObject heroPrefab;
+    public GameObject resourcePrefab;
+    
     [System.Serializable]
     public class CastleInfo
     {
@@ -100,14 +104,19 @@ public class GridBehavior : MonoBehaviour
         }
 
         CreateCastles();
+        if (castleInfos.Count > 0)
+        {
+            SpawnHero(castleInfos[0], 0);
+        }
         CreateRoads();
+        CreateResources();
         UpdateAllTileSprites();   
     }
 
     private void CreateCastles()
     {
         System.Random rng = new System.Random(seed + 12345);
-
+        
         for (int x = 0; x < columns; x++)
         {
             for (int y = 0; y < rows; y++)
@@ -145,13 +154,49 @@ public class GridBehavior : MonoBehaviour
                 if (!farEnough)
                     continue;
 
-                PlaceCastle(x, y);
+                PlaceCastle(x, y, nextTeamId);
+                nextTeamId++;
                 castles--;
             }
         }
     }
+    
+    private void SpawnHero(CastleInfo castle, int teamId)
+    {
+        if (heroPrefab == null)
+        {
+            Debug.LogWarning("Hero Prefab is not assigned!");
+            return;
+        }
 
-    private void PlaceCastle(int startX, int startY)
+        GridStat spawnTile = GetTile(
+            castle.entrance.x,
+            castle.entrance.y - 1
+        );
+
+        if (spawnTile == null)
+            return;
+
+        GameObject heroObject = Instantiate(
+            heroPrefab,
+            spawnTile.transform.position,
+            Quaternion.identity
+        );
+
+        HeroController hero =
+            heroObject.GetComponent<HeroController>();
+
+        if (hero == null)
+        {
+            Debug.LogError("Hero prefab has no HeroController!");
+            return;
+        }
+
+        hero.grid = this;
+        hero.teamId = teamId;
+    }
+    
+    private void PlaceCastle(int startX, int startY, int teamId)
     {
         Vector2Int entrance = new Vector2Int(startX + castleWidth / 2, startY);
 
@@ -173,22 +218,32 @@ public class GridBehavior : MonoBehaviour
             }
         }
 
-        CastleInfo info = new CastleInfo();
+        CastleInfo info = new CastleInfo
+        {
+            bottomLeft = new Vector2Int(startX, startY),
+            entrance = entrance
+        };
 
-        info.bottomLeft = new Vector2Int(startX, startY);
-        info.entrance = entrance;
         castleInfos.Add(info);
-
         GridStat center = GetTile(startX + castleWidth / 2, startY + castleHeight / 2);
 
-        center.BuildCastle();
+        GameObject castleObject = center.BuildCastle();
+
+        Castle castle = castleObject.GetComponent<Castle>();
+
+        if (castle != null)
+        {
+            castle.teamId = teamId; 
+            castle.gridPosition = entrance;
+        }
     }
+    
     
     private bool CanPlaceCastle(int startX, int startY)
     {
-        for (int x = 0; x < castleWidth; x++)
+        for (int x = -1; x < castleWidth + 1; x++)
         {
-            for (int y = 0; y < castleHeight; y++)
+            for (int y = -1; y < castleHeight + 1; y++)
             {
                 GridStat tile = GetTile(
                     startX + x,
@@ -204,6 +259,42 @@ public class GridBehavior : MonoBehaviour
         }
 
         return true;
+    }
+    
+    private void CreateResources()
+    {
+        System.Random rng = new System.Random(seed + 777);
+
+        for (int x = 0; x < columns; x++)
+        {
+            for (int y = 0; y < rows; y++)
+            {
+                if (rng.NextDouble() > 0.01)
+                    continue;
+
+                GridStat tile = GetTile(x, y);
+
+                if (tile == null)
+                    continue;
+
+                if (!tile.walkable)
+                    continue;
+
+                if (tile.tileType == GridStat.TileType.Road)
+                    continue;
+
+                GameObject resource = Instantiate(
+                    resourcePrefab,
+                    tile.transform.position,
+                    Quaternion.identity
+                );
+
+                ResourceObject obj =
+                    resource.GetComponent<ResourceObject>();
+
+                obj.gridPosition = new Vector2Int(x, y);
+            }
+        }
     }
     
     private void CreateRoads()
@@ -222,8 +313,9 @@ public class GridBehavior : MonoBehaviour
 
         Vector2Int center = new Vector2Int(sumX / castleInfos.Count, sumY / castleInfos.Count);
 
-        List<CastleInfo> sorted =
-            new List<CastleInfo>(castleInfos);
+        center = FindNearestWalkableTile(center);
+
+        List<CastleInfo> sorted = new List<CastleInfo>(castleInfos);
 
         sorted.Sort((a, b) => Vector2Int.Distance(a.entrance, center).CompareTo(Vector2Int.Distance(b.entrance, center)));
 
@@ -248,32 +340,70 @@ public class GridBehavior : MonoBehaviour
                 }
             }
 
-            CreateRoadBetween(
-                from,
-                nearest
-            );
-
-            connected.Add(from);
+            if (CreateRoadBetween(from, nearest))
+            {
+                connected.Add(from);
+            }
         }
     }
     
-    private void CreateRoadBetween(
+    private Vector2Int FindNearestWalkableTile(Vector2Int position)
+    {
+        GridStat center = GetTile(position.x, position.y);
+
+        if (center != null && center.walkable)
+            return position;
+
+        for (int radius = 1; radius < 20; radius++)
+        {
+            for (int x = -radius; x <= radius; x++)
+            {
+                for (int y = -radius; y <= radius; y++)
+                {
+                    GridStat tile = GetTile(
+                        position.x + x,
+                        position.y + y
+                    );
+
+                    if (tile == null)
+                        continue;
+
+                    if (tile.tileType == GridStat.TileType.Grass ||
+                        tile.tileType == GridStat.TileType.Road)
+                    {
+                        return new Vector2Int(
+                            tile.x,
+                            tile.y
+                        );
+                    }
+                }
+            }
+        }
+
+        return position;
+    }
+    
+    private bool CreateRoadBetween(
         Vector2Int from,
         Vector2Int to)
     {
         List<GridStat> path = Pathfinder.FindPath(this, from.x, from.y, to.x, to.y, false);
 
         if (path == null)
-            return;
+        {
+            Debug.Log("Road failed: " + from + " -> " + to);
+
+            return false;
+        }
 
         foreach (GridStat tile in path)
         {
-            tile.tileType =
-                GridStat.TileType.Road;
-
+            tile.tileType = GridStat.TileType.Road;
             tile.ApplyTileType();
             tile.UpdateText();
         }
+
+        return true;
     }
 
     private void UpdateAllTileSprites()

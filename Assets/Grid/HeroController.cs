@@ -5,6 +5,8 @@ public class HeroController : MonoBehaviour
 {
     public GridBehavior grid;
 
+    public int teamId;
+    
     [Header("Movement")]
     public int maxMovementPoints = 30;
     public int movementPoints = 30;
@@ -35,11 +37,8 @@ public class HeroController : MonoBehaviour
             MoveAlongPath();
     }
 
-    public void MoveTo(GridStat target)
+    public void PreviewPath(GridStat target)
     {
-        if (moving)
-            return;
-
         UpdateGridPosition();
 
         List<GridStat> path = Pathfinder.FindPath(
@@ -50,19 +49,21 @@ public class HeroController : MonoBehaviour
             target.y
         );
 
-        if (path == null || path.Count == 0)
+        if (path == null)
         {
+            currentPath = null;
             Debug.Log("Path not found");
             return;
         }
 
         currentPath = TrimPathByMovementPoints(path);
 
-        if (currentPath.Count == 0)
-        {
-            Debug.Log("Not enough movement points");
+        Debug.Log("Path selected: " + currentPath.Count);
+    }
+    public void ConfirmMove()
+    {
+        if (currentPath == null || currentPath.Count == 0)
             return;
-        }
 
         pathIndex = 0;
         moving = true;
@@ -145,18 +146,21 @@ public class HeroController : MonoBehaviour
             gridX = targetTile.x;
             gridY = targetTile.y;
 
+            MapObject mapObject =
+                targetTile.GetComponentInChildren<MapObject>();
+
+            if (mapObject != null)
+            {
+                mapObject.Interact(this);
+            }
+            
             pathIndex++;
         }
     }
 
     private void UpdateGridPosition()
     {
-        gridX = Mathf.RoundToInt(
-            (transform.position.x -
-             grid.leftBottomLocation.x) /
-             grid.scale
-        );
-
+        gridX = Mathf.RoundToInt((transform.position.x - grid.leftBottomLocation.x) / grid.scale);
         gridY = Mathf.RoundToInt((transform.position.y - grid.leftBottomLocation.y) / grid.scale);
     }
 

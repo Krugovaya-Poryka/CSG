@@ -321,6 +321,9 @@ MonoBehaviour:
   roadBottomRight: {fileID: -1663583903, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   roadBottomLeftRight: {fileID: 168098245, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   roadTopLeftRight: {fileID: -634149434, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottomTopRight: {fileID: -789375259, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottomTopLeft: {fileID: 23740390, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  roadBottomTopLeftRight: {fileID: -617982051, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   forestCenter: {fileID: -773593759, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   forestTop: {fileID: -1942526944, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   forestBottom: {fileID: -1235985089, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
@@ -341,6 +344,10 @@ MonoBehaviour:
   waterTopRight: {fileID: -827291659, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   waterBottomLeft: {fileID: -1612947378, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
   waterBottomRight: {fileID: 1360625856, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterDiagonalBottomRight: {fileID: 1750796235, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterDiagonalBottomLeft: {fileID: 1767665710, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterDiagonalTopRight: {fileID: -352221625, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
+  waterDiagonalTopLeft: {fileID: 799465184, guid: 485b4743c031631a1a05ba8f9cdccbc5, type: 3}
 --- !u!61 &8749822451023933138
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -67,10 +67,10 @@ public static class HexPathfinding
     }
 
     public static List<Vector2Int> ReconstructPath(
-        Vector2Int start,
-        Vector2Int target,
-        Dictionary<Vector2Int, Vector2Int> cameFrom,
-        bool isFlyer)
+    Vector2Int start,
+    Vector2Int target,
+    Dictionary<Vector2Int, Vector2Int> cameFrom,
+    bool isFlyer)
     {
         List<Vector2Int> path = new List<Vector2Int>();
 
@@ -80,14 +80,26 @@ public static class HexPathfinding
             return path;
         }
 
-        if (!cameFrom.ContainsKey(target)) return path;
+        if (cameFrom == null || !cameFrom.ContainsKey(target)) return path;
 
         Vector2Int current = target;
-        while (current != start)
+        int safetyCounter = 0; // Захист від нескінченного циклу
+
+        while (current != start && safetyCounter < 500)
         {
             path.Add(current);
-            current = cameFrom[current];
+
+            if (!cameFrom.ContainsKey(current)) break;
+
+            Vector2Int next = cameFrom[current];
+
+            // Якщо застрягли на старій стартовій точці
+            if (next == current) break;
+
+            current = next;
+            safetyCounter++;
         }
+
         path.Reverse();
         return path;
     }

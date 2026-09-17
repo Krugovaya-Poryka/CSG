@@ -48,7 +48,7 @@ TextureImporter:
   compressionQuality: 50
   spriteMode: 2
   spriteExtrude: 1
-  spriteMeshType: 1
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 400
@@ -118,12 +118,12 @@ TextureImporter:
       name: "\u0430\u0440\u0431\u0430\u043B\u0435\u0442\u0447\u0438\u043A_0"
       rect:
         serializedVersion: 2
-        x: 8
-        y: 54
-        width: 577
-        height: 768
+        x: 0
+        y: 0
+        width: 1280
+        height: 864
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -140,7 +140,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: c68061be537056f4193e2be82bce5d1a
     internalID: 0
     vertices: []
     indices: 

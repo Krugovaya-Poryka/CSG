@@ -42,7 +42,7 @@ public class BattleResultUI : MonoBehaviour
             if (lostCount <= 0) continue;
 
             Transform targetContainer = (unit.teamId == 0) ? playerLossesContainer : enemyLossesContainer;
-            CreateLossEntry(unit.data.idleSprite, lostCount, targetContainer);
+            CreateLossEntry(unit.data.lossSprite, lostCount, targetContainer);
         }
     }
 
@@ -59,7 +59,14 @@ public class BattleResultUI : MonoBehaviour
         TMP_Text countText = entry.transform.Find("Text")?.GetComponent<TMP_Text>();
         if (countText == null) countText = entry.GetComponentInChildren<TMP_Text>();
 
-        if (icon != null) icon.sprite = unitSprite;
+        if (icon != null)
+        {
+            icon.sprite = unitSprite;
+            icon.preserveAspect = true;
+
+            RectTransform iconRect = icon.rectTransform;
+            iconRect.localScale = Vector3.one;
+        }
         if (countText != null) countText.text = lostAmount.ToString();
     }
 

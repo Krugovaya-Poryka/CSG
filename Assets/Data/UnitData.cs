@@ -6,8 +6,9 @@ public class UnitData : ScriptableObject
     public string unitName;
 
     [Header("Спрайти")]
-    public Sprite idleSprite;   // Текстура у спокої
+    public Sprite idleSprite; // Текстура у спокої
     public Sprite attackSprite; // Текстура під час атаки
+    public Sprite lossSprite; // Текстура на екрані втрат
 
     [Header("Базові характеристики")]
     public int attack = 5;

@@ -85,4 +85,23 @@ public class TurnManager : MonoBehaviour
 
         return false;
     }
+
+    public void Surrender()
+    {
+        // якщо б≥й уже зак≥нчено Ч ≥гноруЇмо кл≥к
+        if (activeUnit == null) return;
+
+        // —кидаЇмо stackSize ус≥х юн≥т≥в гравц€ (teamId == 0)
+        foreach (var unit in allUnits)
+        {
+            if (unit != null && unit.teamId == 0)
+            {
+                unit.stackSize = 0;
+                unit.UpdateStackText();
+            }
+        }
+
+        // «апускаЇмо перев≥рку Ч вона визначить поразку гравц€ та покаже в≥кно результат≥в
+        CheckBattleEnd();
+    }
 }

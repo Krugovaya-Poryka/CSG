@@ -42,7 +42,12 @@ public class BattleSetup : MonoBehaviour
         SpawnArmy(defender, teamId: 1, targetColumn: gridManager.columns - 1);
 
         if (turnManager != null)
+        {
+            // ѕередаЇмо ≥м'€ геро€ гравц€ у TurnManager
+            turnManager.playerHeroName = attacker.heroName;
+
             turnManager.StartBattle();
+        }
     }
 
     private void SpawnArmy(HeroArmy army, int teamId, int targetColumn)

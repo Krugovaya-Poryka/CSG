@@ -10,12 +10,16 @@ public class TurnManager : MonoBehaviour
     private int currentUnitIndex = 0;
 
     public BattleResultUI resultUI;
+    public string playerHeroName; // ≤м'€ геро€ дл€ описового тексту
+
+    private bool isSurrendered = false;
 
     public void StartBattle()
     {
         registeredUnits = new List<BattleUnit>(allUnits);
         SortUnitsBySpeed();
         currentUnitIndex = 0;
+        isSurrendered = false;
         StartTurn();
     }
 
@@ -23,10 +27,8 @@ public class TurnManager : MonoBehaviour
     {
         if (CheckBattleEnd()) return;
 
-        // ѕерев≥рка завершенн€ раунду
         if (currentUnitIndex >= allUnits.Count)
         {
-            // ¬идал€Їмо мертвих юн≥т≥в “≤Ћ№ » наприк≥нц≥ раунду
             allUnits.RemoveAll(u => u == null || u.stackSize <= 0);
 
             if (CheckBattleEnd()) return;
@@ -40,7 +42,6 @@ public class TurnManager : MonoBehaviour
             }
         }
 
-        // якщо юн≥т за цим ≥ндексом загинув ран≥ше в цьому ж раунд≥ Ч пропускаЇмо його
         if (allUnits[currentUnitIndex] == null || allUnits[currentUnitIndex].stackSize <= 0)
         {
             EndTurn();
@@ -71,14 +72,28 @@ public class TurnManager : MonoBehaviour
         int team0Count = allUnits.Count(u => u != null && u.teamId == 0 && u.stackSize > 0);
         int team1Count = allUnits.Count(u => u != null && u.teamId == 1 && u.stackSize > 0);
 
-        if (team0Count == 0 || team1Count == 0)
+        if (isSurrendered || team0Count == 0 || team1Count == 0)
         {
-            bool isPlayerVictory = (team1Count == 0);
             activeUnit = null;
 
             if (resultUI != null)
             {
-                resultUI.ShowResults(isPlayerVictory, registeredUnits);
+                BattleOutcome outcome;
+
+                if (isSurrendered)
+                {
+                    outcome = BattleOutcome.Surrender;
+                }
+                else if (team1Count == 0)
+                {
+                    outcome = BattleOutcome.Victory;
+                }
+                else
+                {
+                    outcome = BattleOutcome.Defeat;
+                }
+
+                resultUI.ShowResults(outcome, registeredUnits, playerHeroName);
             }
             return true;
         }
@@ -88,10 +103,10 @@ public class TurnManager : MonoBehaviour
 
     public void Surrender()
     {
-        // якщо б≥й уже зак≥нчено Ч ≥гноруЇмо кл≥к
         if (activeUnit == null) return;
 
-        // —кидаЇмо stackSize ус≥х юн≥т≥в гравц€ (teamId == 0)
+        isSurrendered = true;
+
         foreach (var unit in allUnits)
         {
             if (unit != null && unit.teamId == 0)
@@ -101,7 +116,6 @@ public class TurnManager : MonoBehaviour
             }
         }
 
-        // «апускаЇмо перев≥рку Ч вона визначить поразку гравц€ та покаже в≥кно результат≥в
         CheckBattleEnd();
     }
 }

@@ -383,9 +383,7 @@ public class GridBehavior : MonoBehaviour
         return position;
     }
     
-    private bool CreateRoadBetween(
-        Vector2Int from,
-        Vector2Int to)
+    private bool CreateRoadBetween(Vector2Int from, Vector2Int to)
     {
         List<GridStat> path = Pathfinder.FindPath(this, from.x, from.y, to.x, to.y, false);
 

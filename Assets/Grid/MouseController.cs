@@ -41,8 +41,7 @@ public class MouseController : MonoBehaviour
 
         foreach (Collider2D hit in hits)
         {
-            HeroController hero =
-                hit.GetComponent<HeroController>();
+            HeroController hero = hit.GetComponent<HeroController>();
 
             if (hero != null)
             {
@@ -83,7 +82,7 @@ public class MouseController : MonoBehaviour
                 return;
             }
 
-            HeroSelectionManager.Instance.MoveSelectedHero(tile);
+            HeroSelectionManager.Instance.ClickTile(tile);
             return;
         }
     }

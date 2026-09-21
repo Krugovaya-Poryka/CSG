@@ -422,13 +422,6 @@ public class GridStat : MonoBehaviour
         return neighbour.tileType != tile;
     }
     
-    private void OnMouseDown()
-    {
-        if (!walkable)
-            return;
-
-        HeroSelectionManager.Instance.ClickTile(this);
-    }
     
     public void UpdateText()
     {

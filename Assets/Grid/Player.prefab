@@ -120,6 +120,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroController
   grid: {fileID: 0}
+  pm: {fileID: 0}
+  pathMarkerPrefab: {fileID: 8946038419303559817, guid: 8dc8fe509fde2323f87c4c40e96936dd, type: 3}
   teamId: 0
   maxMovementPoints: 30
   movementPoints: 30

@@ -19,14 +19,6 @@ public class HeroSelectionManager : MonoBehaviour
         if (selectedHero == null)
             return;
 
-        if (selectedTarget == target)
-        {
-            selectedHero.ConfirmMove();
-            selectedTarget = null;
-            return;
-        }
-
-        selectedTarget = target;
         selectedHero.PreviewPath(target);
     }
     
@@ -45,14 +37,7 @@ public class HeroSelectionManager : MonoBehaviour
 
         Debug.Log("Selected hero: " + hero.name);
     }
-
-    public void MoveSelectedHero(GridStat target)
-    {
-        if (selectedHero == null)
-            return;
-
-        ClickTile(target);
-    }
+    
     
 
     

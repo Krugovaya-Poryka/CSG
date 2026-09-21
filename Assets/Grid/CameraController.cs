@@ -41,7 +41,6 @@ public class CameraController : MonoBehaviour
         if (Keyboard.current.dKey.isPressed)
             move.x += 1;
 
-        // стрілки теж працюють
         if (Keyboard.current.upArrowKey.isPressed)
             move.y += 1;
 
@@ -66,10 +65,6 @@ public class CameraController : MonoBehaviour
 
         cam.orthographicSize -= scroll * zoomSpeed;
 
-        cam.orthographicSize = Mathf.Clamp(
-            cam.orthographicSize,
-            minZoom,
-            maxZoom
-        );
+        cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minZoom, maxZoom);
     }
 }

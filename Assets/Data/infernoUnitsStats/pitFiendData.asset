@@ -15,6 +15,7 @@ MonoBehaviour:
   unitName: "\u0412\u043B\u0430\u0434\u0438\u043A\u0438 \u0411\u0435\u0437\u043E\u0434\u043D\u0456"
   idleSprite: {fileID: 1018402594, guid: 60e8d55803d53b943baecdbff5d27517, type: 3}
   attackSprite: {fileID: 138719546, guid: 2d03d289eb5a20c42b603ecca1811727, type: 3}
+  lossSprite: {fileID: 1018402594, guid: 71213e6b00e13254da5259f0182d08e0, type: 3}
   attack: 13
   defense: 13
   minDamage: 13

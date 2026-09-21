@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 6dd957fa1fa130e469adb149a4e230d8
+guid: 72eeeaeb429168c4ba02614f910c48c7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6765923985237778103
-    second: "\u0444\u043E\u043D \u0442\u0440\u0430\u0432\u0430_0"
+      213: -1467324710652752137
+    second: "\u043C\u043E\u043D\u0430\u0445_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -48,10 +48,10 @@ TextureImporter:
   compressionQuality: 50
   spriteMode: 2
   spriteExtrude: 1
-  spriteMeshType: 1
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 400
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -115,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u0444\u043E\u043D \u0442\u0440\u0430\u0432\u0430_0"
+      name: "\u043C\u043E\u043D\u0430\u0445_0"
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1280
-        height: 720
+        x: 445
+        y: 392
+        width: 400
+        height: 400
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7be9465640465ed50800000000000000
-      internalID: 6765923985237778103
+      spriteID: 7fec36b23f303abe0800000000000000
+      internalID: -1467324710652752137
       vertices: []
       indices: 
       edges: []
@@ -140,7 +140,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 8e70e1a8c1876224982ee8d0ed559bf7
+    spriteID: e4de86f31113c00429f0916a6842bcab
     internalID: 0
     vertices: []
     indices: 
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u0444\u043E\u043D \u0442\u0440\u0430\u0432\u0430_0": 6765923985237778103
+      "\u043C\u043E\u043D\u0430\u0445_0": -1467324710652752137
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

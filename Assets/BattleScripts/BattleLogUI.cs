@@ -5,7 +5,7 @@ public class BattleLogUI : MonoBehaviour
 {
     public static BattleLogUI Instance;
 
-    public TMP_Text statusText; // Посилання на текст у нижній панелі
+    [SerializeField] private TMP_Text statusText; // Посилання на текст у нижній панелі
 
     private void Awake()
     {
@@ -30,8 +30,13 @@ public class BattleLogUI : MonoBehaviour
 
         string attackerColor = attacker.teamId == 0 ? "#55FFFF" : "#FF5555";
         string targetColor = target.teamId == 0 ? "#55FFFF" : "#FF5555";
-        string actionText = isRetaliation ? "контратакує" : "завдає";
+        string actionText = isRetaliation ? "контратакує на" : "завдає";
 
-        statusText.text = $"<color={attackerColor}>{attacker.data.unitName}</color> {actionText} <color={targetColor}>{target.data.unitName}</color> — <color=#FFFF55><b>{damage}</b></color> шкоди!";
+        statusText.text = $"<color={attackerColor}>{attacker.data.unitName}</color> {actionText} <color={targetColor}>{target.data.unitName}</color> <color=#FFFF55><b>{damage}</b></color> шкоди!";
+    }
+
+    public void LogCustomMessage(string message)
+    {
+        statusText.text = message;
     }
 }

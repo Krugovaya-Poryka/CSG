@@ -1,18 +1,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class BattleInputHandler : MonoBehaviour
 {
     public TurnManager turnManager;
     public HexGridManager gridManager;
-    public Color moveHighlightColor = new Color(0.3f, 1f, 0.3f, 0.6f);
 
     private bool isProcessingAction = false;
     private BattleUnit currentActiveUnit;
     private Dictionary<Vector2Int, Vector2Int> currentPathMap;
-
     private Dictionary<SpriteRenderer, Color> originalColors = new Dictionary<SpriteRenderer, Color>();
+
+    [Header("Кольори підсвічування")]
+    public Color moveHighlightColor = new Color(0.3f, 1f, 0.3f, 0.6f);
+    public Color activePlayerColor = new Color(0.2f, 1f, 0.2f, 0.8f);
+    public Color enemyTargetColor = new Color(1f, 0.2f, 0.2f, 0.7f);
 
     private void Awake()
     {
@@ -24,10 +28,10 @@ public class BattleInputHandler : MonoBehaviour
     {
         if (turnManager == null || gridManager == null) return;
 
-        // ЗАХИСТ: Якщо активного юніта немає (бій закінчено) — вимикаємо підсвітку і блокуємо кліки
+        // Якщо немає активного юніта (бій закінчено) — вимикаємо підсвітку
         if (turnManager.activeUnit == null || turnManager.allUnits.Count == 0)
         {
-            if (currentPathMap != null)
+            if (currentPathMap != null || currentActiveUnit != null)
             {
                 currentPathMap = null;
                 currentActiveUnit = null;
@@ -36,6 +40,7 @@ public class BattleInputHandler : MonoBehaviour
             return;
         }
 
+        // При зміні активного юніта оновлюємо область ходу та підсвічування
         if (turnManager.activeUnit != currentActiveUnit && !isProcessingAction)
         {
             currentActiveUnit = turnManager.activeUnit;
@@ -44,55 +49,84 @@ public class BattleInputHandler : MonoBehaviour
 
         if (isProcessingAction) return;
 
-        if (turnManager.activeUnit != currentActiveUnit && !isProcessingAction)
+        // --- ОБРОБКА КЛАВІАТУРИ (Тільки для юнітів гравця teamId == 0) ---
+        if (Keyboard.current != null && turnManager.activeUnit != null && turnManager.activeUnit.teamId == 0)
         {
-            currentActiveUnit = turnManager.activeUnit;
-            HighlightMoveArea();
+            // 1. Клавіша W — Перенести в кінець черги (Wait)
+            if (Keyboard.current.wKey.wasPressedThisFrame)
+            {
+                if (!turnManager.activeUnit.hasWaited)
+                {
+                    ClearHighlights();
+                    turnManager.WaitCurrentUnit();
+                    return;
+                }
+                else
+                {
+                    if (BattleLogUI.Instance != null)
+                    {
+                        BattleLogUI.Instance.LogCustomMessage("Цей юніт вже відкладав хід у цьому раунді!");
+                    }
+                }
+            }
+
+            // 2. Клавіша Space — Пропустити хід / Захист
+            if (Keyboard.current.spaceKey.wasPressedThisFrame)
+            {
+                ClearHighlights();
+                turnManager.SkipCurrentUnitTurn();
+                return;
+            }
         }
 
-        if (isProcessingAction || turnManager.activeUnit == null) return;
-
+        // Обробка кліку миші
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
+            // ЗАХИСТ ВІД КЛІКІВ КРІЗЬ UI: якщо курсор над кнопкою чи вікном — ігноруємо клік по гексу!
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                return;
+            }
+
             Vector2 screenPos = Mouse.current.position.ReadValue();
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(screenPos);
 
             RaycastHit2D[] hits = Physics2D.RaycastAll(mousePos, Vector2.zero);
 
             BattleUnit clickedUnit = null;
-            GridStat clickedHex = null;
+            BattleHex clickedHex = null;
 
             foreach (var hit in hits)
             {
                 if (clickedUnit == null) clickedUnit = hit.collider.GetComponentInParent<BattleUnit>();
-                if (clickedHex == null) clickedHex = hit.collider.GetComponent<GridStat>();
+                if (clickedHex == null) clickedHex = hit.collider.GetComponent<BattleHex>();
             }
 
-            // ЯКЩО КЛІКНУЛИ ПО ТАЙЛУ: Шукаємо, чи стоїть на цьому тайлі юніт
+            // Якщо клікнули по гексу, де стоїть юніт
             if (clickedUnit == null && clickedHex != null)
             {
                 Vector2Int hexCoords = new Vector2Int(clickedHex.x, clickedHex.y);
                 clickedUnit = GetUnitAtHex(hexCoords);
             }
 
-            // --- КЛІК ПО ВОРОГУ (по спрайту АБО по його тайлу) ---
+            // --- КЛІК ПО ВОРОГУ ---
             if (clickedUnit != null && clickedUnit.teamId != turnManager.activeUnit.teamId && clickedUnit.stackSize > 0)
             {
                 BattleUnit attacker = turnManager.activeUnit;
                 int distance = HexUtils.GetHexDistance(attacker.hexCoords, clickedUnit.hexCoords);
                 bool isEnemyAdjacent = CheckIfEnemyIsAdjacent(attacker);
 
-                // 1. Дальній бій
+                // 1. Дальній бій (лише якщо є постріли, НЕМАЄ ворога упритул і відстань > 1)
                 if (attacker.data.isRanged && attacker.currentShots > 0 && !isEnemyAdjacent && distance > 1)
                 {
                     ExecuteAction(() => attacker.RangedAttack(clickedUnit, OnActionComplete));
                 }
-                // 2. Ближній бій упритул
+                // 2. Ближній бій упритул (дистанція = 1)
                 else if (distance == 1)
                 {
                     ExecuteAction(() => attacker.MeleeAttack(clickedUnit, OnActionComplete));
                 }
-                // 3. Ближній бій з підходом (рух по покроковому шляху + удар)
+                // 3. Ближній бій з підходом (переміщення по сітці + удар)
                 else
                 {
                     Vector2Int? attackHexCoords = GetBestAttackHex(attacker, clickedUnit);
@@ -100,7 +134,7 @@ public class BattleInputHandler : MonoBehaviour
                     if (attackHexCoords.HasValue)
                     {
                         Vector2Int targetCoords = attackHexCoords.Value;
-                        
+
                         List<Vector2Int> pathCoords = HexPathfinding.ReconstructPath(
                             attacker.hexCoords,
                             targetCoords,
@@ -123,7 +157,6 @@ public class BattleInputHandler : MonoBehaviour
             {
                 Vector2Int targetCoords = new Vector2Int(clickedHex.x, clickedHex.y);
 
-                // ПЕРЕВІРКА: не дозволяємо рухатися на клітинку, де вже хтось стоїть
                 if (!IsHexOccupied(targetCoords) && currentPathMap != null && currentPathMap.ContainsKey(targetCoords) && targetCoords != turnManager.activeUnit.hexCoords)
                 {
                     List<Vector2Int> pathCoords = HexPathfinding.ReconstructPath(
@@ -179,7 +212,7 @@ public class BattleInputHandler : MonoBehaviour
 
             if (currentPathMap == null || !currentPathMap.ContainsKey(hexCoords)) continue;
 
-            GridStat stat = gridManager.gridArray[hexCoords.x, hexCoords.y].GetComponent<GridStat>();
+            BattleHex stat = gridManager.gridArray[hexCoords.x, hexCoords.y].GetComponent<BattleHex>();
             if (stat == null || !stat.walkable || IsHexOccupied(hexCoords)) continue;
 
             int distToAttacker = HexUtils.GetHexDistance(attacker.hexCoords, hexCoords);
@@ -196,11 +229,11 @@ public class BattleInputHandler : MonoBehaviour
     private void HighlightMoveArea()
     {
         ClearHighlights();
-        if (currentActiveUnit == null) return;
+        if (currentActiveUnit == null || currentActiveUnit.stackSize <= 0) return;
 
         HashSet<Vector2Int> blockedHexes = new HashSet<Vector2Int>();
 
-        GridStat[] allHexes = FindObjectsByType<GridStat>(FindObjectsSortMode.None);
+        BattleHex[] allHexes = FindObjectsByType<BattleHex>(FindObjectsSortMode.None);
         foreach (var hex in allHexes)
         {
             if (!hex.walkable) blockedHexes.Add(new Vector2Int(hex.x, hex.y));
@@ -220,6 +253,7 @@ public class BattleInputHandler : MonoBehaviour
 
         currentPathMap = HexPathfinding.FindReachableArea(start, speed, isFlyer, blockedHexes);
 
+        // Сірі гекси під доступними порожніми клітинками для переміщення
         foreach (var hex in allHexes)
         {
             Vector2Int hexCoords = new Vector2Int(hex.x, hex.y);
@@ -228,20 +262,89 @@ public class BattleInputHandler : MonoBehaviour
 
             if (currentPathMap.ContainsKey(hexCoords) && hexCoords != start)
             {
-                Transform innerTile = hex.transform.Find("InnerTile");
-                if (innerTile != null)
+                SetHexColor(hex.gameObject, moveHighlightColor);
+            }
+        }
+
+        // ПІДСВІЧУЄМО ТІЛЬКИ ЯКЩО ХОДИТЬ ЮНІТ ГРАВЦЯ (teamId == 0)
+        if (currentActiveUnit.teamId == 0)
+        {
+            // 1. Зелений гекс під самісіньким activeUnit
+            GameObject activeHex = gridManager.gridArray[start.x, start.y];
+            SetHexColor(activeHex, activePlayerColor);
+
+            // 2. Червоні гекси під ворогами, яких можна атакувати
+            List<BattleUnit> attackableTargets = GetAttackableTargets(currentActiveUnit);
+            foreach (var target in attackableTargets)
+            {
+                GameObject targetHex = gridManager.gridArray[target.hexCoords.x, target.hexCoords.y];
+                SetHexColor(targetHex, enemyTargetColor);
+            }
+        }
+    }
+
+    private List<BattleUnit> GetAttackableTargets(BattleUnit attacker)
+    {
+        List<BattleUnit> targets = new List<BattleUnit>();
+        if (attacker == null || attacker.stackSize <= 0) return targets;
+
+        bool isBlockedByEnemy = CheckIfEnemyIsAdjacent(attacker);
+
+        // Дальнобійник може стріляти, лише якщо немає ворога упритул і є набої
+        bool canShoot = attacker.data.isRanged && attacker.currentShots > 0 && !isBlockedByEnemy;
+
+        foreach (var enemy in turnManager.allUnits)
+        {
+            if (enemy == null || enemy.stackSize <= 0 || enemy.teamId == attacker.teamId)
+                continue;
+
+            if (canShoot)
+            {
+                // Якщо не заблокований — бачить і може обстріляти будь-кого
+                targets.Add(enemy);
+            }
+            else
+            {
+                // Якщо заблокований або це мілішник:
+                int dist = HexUtils.GetHexDistance(attacker.hexCoords, enemy.hexCoords);
+                // 1. Ворог стоїть упритул
+                if (dist == 1)
                 {
-                    SpriteRenderer sr = innerTile.GetComponent<SpriteRenderer>();
-                    if (sr != null)
-                    {
-                        if (!originalColors.ContainsKey(sr))
-                        {
-                            originalColors[sr] = sr.color;
-                        }
-                        sr.color = moveHighlightColor;
-                    }
+                    targets.Add(enemy);
+                }
+                // 2. Або ми можемо дойти до нього за цей хід для удару
+                else if (GetBestAttackHex(attacker, enemy) != null)
+                {
+                    targets.Add(enemy);
                 }
             }
+        }
+
+        return targets;
+    }
+
+    private void SetHexColor(GameObject hexObj, Color color)
+    {
+        if (hexObj == null) return;
+
+        SpriteRenderer sr = null;
+        Transform innerTile = hexObj.transform.Find("InnerTile");
+        if (innerTile != null)
+        {
+            sr = innerTile.GetComponent<SpriteRenderer>();
+        }
+        if (sr == null)
+        {
+            sr = hexObj.GetComponent<SpriteRenderer>();
+        }
+
+        if (sr != null)
+        {
+            if (!originalColors.ContainsKey(sr))
+            {
+                originalColors[sr] = sr.color;
+            }
+            sr.color = color;
         }
     }
 

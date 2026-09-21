@@ -30,10 +30,17 @@ public class FloatingText : MonoBehaviour
             textColor = textMesh.color;
             textColor.a = 1f; // Гарантуємо 100% видимість на початку
             textMesh.color = textColor;
+
+            // ГАРАНТІЯ ВИДИМОСТІ: примусово виносимо текст поверх усіх спрайтів та сітки
+            Renderer textRenderer = textMesh.GetComponent<Renderer>();
+            if (textRenderer != null)
+            {
+                textRenderer.sortingOrder = 100;
+            }
         }
 
         isInitialized = true;
-        Destroy(gameObject, lifetime); // Запускаємо таймер знищення
+        Destroy(gameObject, lifetime);
     }
 
     void Update()

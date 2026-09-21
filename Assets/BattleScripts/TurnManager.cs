@@ -118,4 +118,29 @@ public class TurnManager : MonoBehaviour
 
         CheckBattleEnd();
     }
+
+    public void WaitCurrentUnit()
+    {
+        if (activeUnit == null || activeUnit.hasWaited) return;
+
+        activeUnit.hasWaited = true;
+
+        // Видаляємо з поточної позиції та додаємо у кінець списку
+        allUnits.RemoveAt(currentUnitIndex);
+        allUnits.Add(activeUnit);
+
+        // Оскільки ми видалили елемент, наступний юніт автоматично став на currentUnitIndex.
+        // Тому ми НЕ робимо currentUnitIndex++, а одразу запускаємо StartTurn().
+        StartTurn();
+    }
+
+    public void SkipCurrentUnitTurn()
+    {
+        if (activeUnit == null) return;
+
+        // Тут за бажанням можна додати +20% до захисту юніта (як у HoMM3):
+        // activeUnit.ApplyDefenseBuff();
+
+        EndTurn();
+    }
 }

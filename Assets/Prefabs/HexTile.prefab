@@ -193,8 +193,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2247244166569515451}
   - component: {fileID: 998035920352995619}
-  - component: {fileID: 6373521623374260881}
   - component: {fileID: 2955761496968096793}
+  - component: {fileID: 7673710514005959108}
   m_Layer: 0
   m_Name: HexTile
   m_TagString: Untagged
@@ -279,48 +279,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
---- !u!114 &6373521623374260881
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8239344644054241640}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f31e4afc12893716c951ec27166a9a11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GridStat
-  visited: -1
-  x: 0
-  y: 0
-  walkable: 1
-  coordinateText: {fileID: 0}
-  grid: {fileID: 0}
-  movementCost: 0
-  tileType: 0
-  grassSprites: []
-  roadSprites: []
-  forestCenter: {fileID: 0}
-  forestTop: {fileID: 0}
-  forestBottom: {fileID: 0}
-  forestLeft: {fileID: 0}
-  forestRight: {fileID: 0}
-  forestTopLeft: {fileID: 0}
-  forestTopRight: {fileID: 0}
-  forestBottomLeft: {fileID: 0}
-  forestBottomRight: {fileID: 0}
-  forestTree: {fileID: 0}
-  swampSprites: []
-  waterCenter: {fileID: 0}
-  waterTop: {fileID: 0}
-  waterBottom: {fileID: 0}
-  waterLeft: {fileID: 0}
-  waterRight: {fileID: 0}
-  waterTopLeft: {fileID: 0}
-  waterTopRight: {fileID: 0}
-  waterBottomLeft: {fileID: 0}
-  waterBottomRight: {fileID: 0}
 --- !u!60 &2955761496968096793
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -374,3 +332,18 @@ PolygonCollider2D:
       - {x: 0.43359375, y: 0.25}
       - {x: 0, y: 0.5}
   m_UseDelaunayMesh: 1
+--- !u!114 &7673710514005959108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8239344644054241640}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cf8a21f542f040b13bd1eb2c132e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleHex
+  x: 0
+  y: 0
+  walkable: 1

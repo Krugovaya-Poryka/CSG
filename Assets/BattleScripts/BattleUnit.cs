@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI; // Обов'язково додайте для роботи з Image
 using TMPro;
 
 public class BattleUnit : MonoBehaviour
@@ -16,11 +17,18 @@ public class BattleUnit : MonoBehaviour
 
     public int initialStackSize;
 
+    public bool hasWaited = false;
+
     [Header("Візуалізація")]
-    public SpriteRenderer unitSprite;   // Посилання на SpriteRenderer на дочірньому Texture
-    public Transform textureChild;      // Дочірній об'єкт Texture
-    public GameObject damageTextPrefab; // Префаб випливаючого тексту
-    public TMP_Text stackText; // Посилання на текст кількості юнітів
+    public SpriteRenderer unitSprite;
+    public Transform textureChild;
+    public GameObject damageTextPrefab;
+    public TMP_Text stackText;
+
+    [Header("Налаштування плашки стеку")]
+    public Image stackBgImage; // Посилання на Image плашки (Square)
+    public Color playerColor = new Color(0.2f, 0.6f, 1f, 0.85f); // Блакитний колір для гравця
+    public Color enemyColor = new Color(0.9f, 0.2f, 0.2f, 0.85f);  // Червоний колір для ворога
 
     public void Init(UnitData unitData, int count, int team)
     {
@@ -34,16 +42,30 @@ public class BattleUnit : MonoBehaviour
 
         if (unitSprite == null) unitSprite = GetComponentInChildren<SpriteRenderer>();
         if (textureChild == null) textureChild = transform.Find("Texture");
-
-        // Автоматичний пошук тексту, якщо забули перетягнути в Inspector
         if (stackText == null) stackText = GetComponentInChildren<TMP_Text>();
+
+        // Автоматичний пошук Image плашки, якщо її не перетягнули в Інспекторі
+        if (stackBgImage == null && stackText != null)
+        {
+            stackBgImage = stackText.GetComponentInParent<Image>();
+        }
 
         if (unitSprite != null && data != null && data.idleSprite != null)
         {
             unitSprite.sprite = data.idleSprite;
         }
 
+        ApplyTeamColor();
         UpdateStackText();
+    }
+
+    private void ApplyTeamColor()
+    {
+        if (stackBgImage != null)
+        {
+            // Якщо teamId == 0 — це команда гравця, інакше — ворог
+            stackBgImage.color = (teamId == 0) ? playerColor : enemyColor;
+        }
     }
 
     public void UpdateStackText()
@@ -52,15 +74,21 @@ public class BattleUnit : MonoBehaviour
         {
             stackText.text = stackSize.ToString();
 
-            // Якщо стек знищено — ховаємо текст
-            stackText.gameObject.SetActive(stackSize > 0);
+            // Якщо стек знищено — ховаємо увесь Canvas / плашку
+            if (stackBgImage != null)
+            {
+                stackBgImage.gameObject.SetActive(stackSize > 0);
+            }
+            else
+            {
+                stackText.gameObject.SetActive(stackSize > 0);
+            }
         }
     }
 
     public void TakeDamage(int damage)
     {
-        ShowDamageText(damage);
-
+        // 1. Розрахунок здоров'я та кількості в стеку
         int totalDamage = damage;
         while (totalDamage > 0 && stackSize > 0)
         {
@@ -77,6 +105,29 @@ public class BattleUnit : MonoBehaviour
             }
         }
 
+        // 2. Спавн та запуск FloatingText
+        if (damageTextPrefab != null)
+        {
+            // -0.5f по Z виносить текст трохи ближче до камери
+            Vector3 spawnPos = transform.position + new Vector3(0, 1.8f, -0.5f);
+            GameObject textObj = Instantiate(damageTextPrefab, spawnPos, Quaternion.identity);
+
+            FloatingText floatText = textObj.GetComponent<FloatingText>();
+            if (floatText != null)
+            {
+                floatText.Setup(damage);
+            }
+            else
+            {
+                Debug.LogError($"[TakeDamage] На префабі {damageTextPrefab.name} немає скрипта FloatingText!");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[TakeDamage] На юніті {gameObject.name} не призначено damageTextPrefab в Інспекторі!");
+        }
+
+        // 3. Оновлення UI та перевірка смерті
         UpdateStackText();
 
         if (stackSize <= 0)
@@ -88,6 +139,7 @@ public class BattleUnit : MonoBehaviour
 
     public void ResetRoundData()
     {
+        hasWaited = false;
         remainingRetaliations = data.retaliationsCount;
     }
 

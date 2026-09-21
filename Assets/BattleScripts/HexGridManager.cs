@@ -124,14 +124,13 @@ public class HexGridManager : MonoBehaviour
                 GameObject hex = Instantiate(hexPrefab, spawnPosition, Quaternion.identity, transform);
                 hex.name = $"Hex_{q}_{r}";
 
-                GridStat stat = hex.GetComponent<GridStat>();
-                if (stat != null)
-                {
-                    stat.x = q;
-                    stat.y = r;
-                    stat.walkable = true;
-                }
-
+                BattleHex stat = hex.GetComponent<BattleHex>();
+                if (stat == null) stat = hex.AddComponent<BattleHex>();
+                
+                stat.x = q;
+                stat.y = r;
+                stat.walkable = true;
+                
                 gridArray[q, r] = hex;
             }
         }
@@ -152,7 +151,7 @@ public class HexGridManager : MonoBehaviour
             int r = Random.Range(0, rows);
 
             GameObject hexObj = gridArray[q, r];
-            GridStat stat = hexObj.GetComponent<GridStat>();
+            BattleHex stat = hexObj.GetComponent<BattleHex>();
 
             if (stat != null && stat.walkable)
             {

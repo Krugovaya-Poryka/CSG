@@ -54,6 +54,30 @@ public class TurnManager : MonoBehaviour
         {
             BattleLogUI.Instance.LogTurn(activeUnit);
         }
+
+        // =========================================================
+        // ПЕРЕВІРКА: Якщо хід належить ШІ (teamId == 1)
+        // =========================================================
+        if (activeUnit.teamId == 1)
+        {
+            // Отримуємо компонент AIUnit з об'єкта або з AIManager
+            AIUnit aiLogic = activeUnit.GetComponent<AIUnit>();
+
+            if (aiLogic != null && aiLogic.IsAlive())
+            {
+                // ШІ автономно робить хід, а після завершення викликає EndTurn()
+                aiLogic.MakeAutonomousDecision(allUnits, () =>
+                {
+                    // Затримка перед передачею ходу для плавності анімації/логу
+                    Invoke(nameof(EndTurn), 1.0f);
+                });
+            }
+            else
+            {
+                // Якщо AIUnit не прикріплений, просто пропускаємо хід
+                EndTurn();
+            }
+        }
     }
 
     public void EndTurn()

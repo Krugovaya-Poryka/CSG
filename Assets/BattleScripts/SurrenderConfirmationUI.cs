@@ -9,7 +9,7 @@ public class SurrenderConfirmationUI : MonoBehaviour
 
     private void Awake()
     {
-        if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
+        if (turnManager == null) turnManager = FindAnyObjectByType<TurnManager>();
 
         // Переконуємось, що вікно закрите на початку гри
         if (confirmationPanel != null)

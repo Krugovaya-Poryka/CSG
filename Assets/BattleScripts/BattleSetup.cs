@@ -98,8 +98,12 @@ public class BattleSetup : MonoBehaviour
 
             if (teamId == 1 && bUnit != null)
             {
-                // Одразу розвертаємо текстуру ворога ліворуч при спавні
                 bUnit.FaceTarget(bUnit.transform.position + Vector3.left);
+
+                if (unitObj.GetComponent<AIUnit>() == null)
+                {
+                    unitObj.AddComponent<AIUnit>();
+                }
             }
 
             if (turnManager != null)

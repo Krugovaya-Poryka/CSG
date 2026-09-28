@@ -11,7 +11,7 @@ public class AIManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindFirstObjectByType<AIManager>();
+                instance = FindAnyObjectByType<AIManager>();
 
                 if (instance == null)
                 {
@@ -71,7 +71,7 @@ public class AIManager : MonoBehaviour
         aiGameObject.transform.position = startPosition;
 
         AIUnit newAI = aiGameObject.AddComponent<AIUnit>();
-        newAI.Initialize(unitName, currentDifficulty, startPosition);
+        /*.Initialize(unitName, currentDifficulty, startPosition);*/
 
         activeAIUnits[unitName] = newAI;
         aiUnitCounter++;

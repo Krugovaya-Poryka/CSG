@@ -1,228 +1,235 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class AIUnit : MonoBehaviour
 {
-    private string aiName;
-    private AIManager.AIDifficulty difficulty;
-    private int currentHealth = 100;
-    private int maxHealth = 100;
-    private Vector3 currentPosition;
-    private int attackDamage = 10;
-    private float attackRange = 5f;
-    private float visionRange = 15f;
-    private float moveSpeed = 3f;
-    private bool isAlive = true;
-    private bool isTakingTurn = false;
-    private int turnCount = 0;
+    private BattleUnit myUnit;
+    private HexGridManager gridManager;
 
-    public void Initialize(string name, AIManager.AIDifficulty aiDifficulty, Vector3 startPosition)
+    private void Awake()
     {
-        aiName = name;
-        difficulty = aiDifficulty;
-        currentPosition = startPosition;
-
-        SetupByDifficulty(aiDifficulty);
-
-        gameObject.name = $"AI_{name}";
-        transform.position = startPosition;
-        
-        Debug.Log($"<color=green>[+] AIUnit '{aiName}' initialized</color>");
-        Debug.Log($"  - Difficulty: {difficulty}");
-        Debug.Log($"  - Health: {currentHealth}/{maxHealth}");
-        Debug.Log($"  - Damage: {attackDamage}");
-        Debug.Log($"  - Position: {currentPosition}");
+        myUnit = GetComponent<BattleUnit>();
+        // Замінено на FindAnyObjectByType
+        gridManager = FindAnyObjectByType<HexGridManager>();
     }
 
-    private void SetupByDifficulty(AIManager.AIDifficulty aiDifficulty)
+    public bool IsAlive()
     {
-        switch (aiDifficulty)
+        return myUnit != null && myUnit.stackSize > 0;
+    }
+
+    /// <summary>
+    /// Головний метод прийняття рішення ШІ для покрокового бою HoMM3
+    /// </summary>
+    public void MakeAutonomousDecision(List<BattleUnit> allUnits, Action onTurnComplete)
+    {
+        if (!IsAlive())
         {
-            case AIManager.AIDifficulty.Easy:
-                attackDamage = 5;
-                maxHealth = 60;
-                currentHealth = maxHealth;
-                visionRange = 10f;
-                moveSpeed = 2f;
-                Debug.Log("<color=yellow>[CONFIG] EASY: Damage=5, HP=60, Vision=10</color>");
-                break;
-                
-            case AIManager.AIDifficulty.Normal:
-                attackDamage = 10;
-                maxHealth = 100;
-                currentHealth = maxHealth;
-                visionRange = 15f;
-                moveSpeed = 3f;
-                Debug.Log("<color=yellow>[CONFIG] NORMAL: Damage=10, HP=100, Vision=15</color>");
-                break;
-                
-            case AIManager.AIDifficulty.Hard:
-                attackDamage = 15;
-                maxHealth = 150;
-                currentHealth = maxHealth;
-                visionRange = 20f;
-                moveSpeed = 4f;
-                Debug.Log("<color=yellow>[CONFIG] HARD: Damage=15, HP=150, Vision=20</color>");
-                break;
+            onTurnComplete?.Invoke();
+            return;
         }
-    }
 
-    public string AnalyzeBattlefield()
-    {
-        if (!isAlive)
-            return "Cannot analyze: dead";
-        
-        string analysis = $"[AI {aiName}] Analyzing battlefield...\n";
-        analysis += $"  - Position: {currentPosition}\n";
-        analysis += $"  - Health: {currentHealth}/{maxHealth}\n";
-        analysis += $"  - Vision: {visionRange}\n";
-        analysis += $"  - Difficulty: {difficulty}\n";
-        
-        Debug.Log($"<color=cyan>{analysis}</color>");
-        return analysis;
-    }
+        if (gridManager == null) gridManager = FindFirstObjectByType<HexGridManager>();
 
-    public bool CanSeeTarget(Vector3 targetPosition)
-    {
-        float distanceToTarget = Vector3.Distance(currentPosition, targetPosition);
-        bool canSee = distanceToTarget <= visionRange;
-        
-        if (canSee)
+        // 1. Пошук ворожих юнітів
+        List<BattleUnit> enemies = new List<BattleUnit>();
+        foreach (var u in allUnits)
         {
-            Debug.Log($"<color=green>[VISION] {aiName} sees target! Distance: {distanceToTarget:F2}</color>");
+            if (u != null && u.stackSize > 0 && u.teamId != myUnit.teamId)
+            {
+                enemies.Add(u);
+            }
+        }
+
+        if (enemies.Count == 0)
+        {
+            onTurnComplete?.Invoke();
+            return;
+        }
+
+        // 2. Вибір найближчого ворога (за відстані на гексовій сітці)
+        BattleUnit target = GetClosestEnemy(enemies);
+        if (target == null)
+        {
+            onTurnComplete?.Invoke();
+            return;
+        }
+
+        int distance = HexUtils.GetHexDistance(myUnit.hexCoords, target.hexCoords);
+        bool isEnemyAdjacent = CheckIfEnemyIsAdjacent(allUnits);
+
+        // --- ВАРІАНТ A: Дальній бій ---
+        if (myUnit.data.isRanged && myUnit.currentShots > 0 && !isEnemyAdjacent && distance > 1)
+        {
+            myUnit.RangedAttack(target, () => onTurnComplete?.Invoke());
+            return;
+        }
+
+        // --- ВАРІАНТ Б: Ближній бій упритул ---
+        if (distance == 1)
+        {
+            myUnit.MeleeAttack(target, () => onTurnComplete?.Invoke());
+            return;
+        }
+
+        // --- ВАРІАНТ В: Переміщення по гексах + Атака або Крок убік ворога ---
+        ExecuteMoveAndAttack(target, allUnits, onTurnComplete);
+    }
+
+    private void ExecuteMoveAndAttack(BattleUnit target, List<BattleUnit> allUnits, Action onTurnComplete)
+    {
+        HashSet<Vector2Int> blockedHexes = GetBlockedHexes(allUnits);
+
+        // Пошук досяжних гексів з урахуванням швидкості та типів юніта (літаючий/наземний)
+        var pathMap = HexPathfinding.FindReachableArea(
+            myUnit.hexCoords,
+            myUnit.data.speed,
+            myUnit.data.isFlyer,
+            blockedHexes
+        );
+
+        Vector2Int? bestAttackCoords = GetBestAttackHex(target, pathMap);
+
+        if (bestAttackCoords.HasValue)
+        {
+            // Рух до сусіднього з ворогом гекса + ближній удар
+            Vector2Int targetCoords = bestAttackCoords.Value;
+            List<Vector2Int> pathCoords = HexPathfinding.ReconstructPath(
+                myUnit.hexCoords, targetCoords, pathMap, myUnit.data.isFlyer
+            );
+
+            List<GameObject> pathHexes = ConvertCoordsToGameObjects(pathCoords);
+
+            StartCoroutine(myUnit.MoveAlongPath(pathHexes, targetCoords, () =>
+            {
+                myUnit.MeleeAttack(target, () => onTurnComplete?.Invoke());
+            }));
         }
         else
         {
-            Debug.Log($"<color=red>[VISION] {aiName} cannot see target! Distance: {distanceToTarget:F2} (> Range: {visionRange})</color>");
-        }
-        
-        return canSee;
-    }
-
-    public Vector3 ChooseTarget(Vector3[] enemyPositions)
-    {
-        if (enemyPositions.Length == 0)
-        {
-            Debug.LogWarning($"<color=orange>[!] {aiName}: No targets available!</color>");
-            return Vector3.zero;
-        }
-        
-        Vector3 bestTarget = enemyPositions[0];
-        float closestDistance = Vector3.Distance(currentPosition, bestTarget);
-        
-        for (int i = 1; i < enemyPositions.Length; i++)
-        {
-            float distance = Vector3.Distance(currentPosition, enemyPositions[i]);
-            if (distance < closestDistance)
+            // Якщо ворог за межами ходу — робимо крок якомога ближче до нього
+            Vector2Int? bestStep = GetBestStepTowards(target, pathMap);
+            if (bestStep.HasValue && bestStep.Value != myUnit.hexCoords)
             {
-                closestDistance = distance;
-                bestTarget = enemyPositions[i];
+                Vector2Int targetCoords = bestStep.Value;
+                List<Vector2Int> pathCoords = HexPathfinding.ReconstructPath(
+                    myUnit.hexCoords, targetCoords, pathMap, myUnit.data.isFlyer
+                );
+
+                List<GameObject> pathHexes = ConvertCoordsToGameObjects(pathCoords);
+
+                StartCoroutine(myUnit.MoveAlongPath(pathHexes, targetCoords, () => onTurnComplete?.Invoke()));
+            }
+            else
+            {
+                // Немає шляху або юніт заблокований — пропускаємо хід
+                onTurnComplete?.Invoke();
             }
         }
-        
-        Debug.Log($"<color=yellow>[TARGET] {aiName} selected target at distance {closestDistance:F2}</color>");
-        return bestTarget;
     }
 
-    public void MoveTowards(Vector3 targetPosition)
+    private BattleUnit GetClosestEnemy(List<BattleUnit> enemies)
     {
-        if (!isAlive)
+        BattleUnit closest = null;
+        int minDist = int.MaxValue;
+
+        foreach (var enemy in enemies)
         {
-            Debug.LogError($"<color=red>[-] {aiName} cannot move: dead</color>");
-            return;
+            int dist = HexUtils.GetHexDistance(myUnit.hexCoords, enemy.hexCoords);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = enemy;
+            }
+        }
+        return closest;
+    }
+
+    private HashSet<Vector2Int> GetBlockedHexes(List<BattleUnit> allUnits)
+    {
+        HashSet<Vector2Int> blocked = new HashSet<Vector2Int>();
+
+        // Замінено на FindObjectsByType без FindObjectsSortMode
+        BattleHex[] hexes = FindObjectsByType<BattleHex>(FindObjectsInactive.Exclude);
+
+        foreach (var h in hexes)
+        {
+            if (!h.walkable) blocked.Add(new Vector2Int(h.x, h.y));
         }
 
-        Vector3 direction = (targetPosition - currentPosition).normalized;
-        currentPosition += direction * moveSpeed * Time.deltaTime;
-        transform.position = currentPosition;
-
-        float distanceToTarget = Vector3.Distance(currentPosition, targetPosition);
-        Debug.Log($"<color=cyan>[MOVE] {aiName} moving to target (Distance: {distanceToTarget:F2})</color>");
-    }
-
-    public int Attack(Vector3 targetPosition)
-    {
-        if (!isAlive)
+        foreach (var u in allUnits)
         {
-            Debug.LogError($"<color=red>[-] {aiName} cannot attack: dead</color>");
-            return 0;
+            if (u != null && u.stackSize > 0)
+            {
+                blocked.Add(u.hexCoords);
+            }
         }
+        return blocked;
+    }
 
-        float distanceToTarget = Vector3.Distance(currentPosition, targetPosition);
-        if (distanceToTarget > attackRange)
+    private Vector2Int? GetBestAttackHex(BattleUnit target, Dictionary<Vector2Int, Vector2Int> pathMap)
+    {
+        List<Vector2Int> neighbors = HexPathfinding.GetNeighbors(target.hexCoords);
+        Vector2Int? best = null;
+        int minDist = int.MaxValue;
+
+        foreach (var coords in neighbors)
         {
-            Debug.LogWarning($"<color=orange>[!] {aiName}: Target out of range! ({distanceToTarget:F2} > {attackRange})</color>");
-            return 0;
-        }
+            if (!pathMap.ContainsKey(coords)) continue;
 
-        int actualDamage = attackDamage + Random.Range(-2, 3);
-        actualDamage = Mathf.Max(1, actualDamage);
-        
-        Debug.Log($"<color=red>[ATTACK] {aiName} attacks! Damage dealt: {actualDamage}</color>");
-        return actualDamage;
+            int dist = HexUtils.GetHexDistance(myUnit.hexCoords, coords);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                best = coords;
+            }
+        }
+        return best;
     }
 
-    public void StartTurn()
+    private Vector2Int? GetBestStepTowards(BattleUnit target, Dictionary<Vector2Int, Vector2Int> pathMap)
     {
-        if (!isAlive)
+        Vector2Int? best = null;
+        int minDist = int.MaxValue;
+
+        foreach (var pair in pathMap)
         {
-            Debug.LogError($"<color=red>[-] {aiName} cannot take turn: dead</color>");
-            return;
+            int dist = HexUtils.GetHexDistance(pair.Key, target.hexCoords);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                best = pair.Key;
+            }
         }
-        
-        isTakingTurn = true;
-        turnCount++;
-        Debug.Log($"<color=green>[TURN] {aiName} started turn #{turnCount}</color>");
+        return best;
     }
 
-    public void EndTurn()
+    private List<GameObject> ConvertCoordsToGameObjects(List<Vector2Int> coordsList)
     {
-        isTakingTurn = false;
-        Debug.Log($"<color=magenta>[TURN] {aiName} ended turn</color>");
-    }
+        List<GameObject> list = new List<GameObject>();
+        if (gridManager == null || gridManager.gridArray == null) return list;
 
-    public void TakeDamage(int damageAmount)
-    {
-        if (!isAlive)
-            return;
-        
-        currentHealth -= damageAmount;
-        Debug.Log($"<color=red>[DAMAGE] {aiName} took {damageAmount} damage! Health: {currentHealth}/{maxHealth}</color>");
-
-        if (currentHealth <= 0)
+        foreach (var c in coordsList)
         {
-            Die();
+            if (c.x >= 0 && c.x < gridManager.columns && c.y >= 0 && c.y < gridManager.rows)
+            {
+                list.Add(gridManager.gridArray[c.x, c.y]);
+            }
         }
+        return list;
     }
 
-    public void Heal(int healAmount)
+    private bool CheckIfEnemyIsAdjacent(List<BattleUnit> allUnits)
     {
-        if (!isAlive)
-            return;
-        
-        currentHealth += healAmount;
-        currentHealth = Mathf.Min(currentHealth, maxHealth);
-        Debug.Log($"<color=green>[HEAL] {aiName} healed for {healAmount}! Health: {currentHealth}/{maxHealth}</color>");
-    }
-
-    public void Die()
-    {
-        isAlive = false;
-        isTakingTurn = false;
-        Debug.Log($"<color=red>[DEAD] {aiName} has been destroyed!</color>");
-    }
-
-    public string GetName() => aiName;
-    public int GetHealth() => currentHealth;
-    public int GetMaxHealth() => maxHealth;
-    public Vector3 GetPosition() => currentPosition;
-    public int GetAttackDamage() => attackDamage;
-    public float GetAttackRange() => attackRange;
-    public bool IsAlive() => isAlive;
-    public bool IsTakingTurn() => isTakingTurn;
-    public int GetTurnCount() => turnCount;
-
-    public string GetStatus()
-    {
-        return $"[{aiName}] HP: {currentHealth}/{maxHealth}, Turns: {turnCount}, Alive: {isAlive}";
+        foreach (var u in allUnits)
+        {
+            if (u != null && u.stackSize > 0 && u.teamId != myUnit.teamId)
+            {
+                if (HexUtils.GetHexDistance(myUnit.hexCoords, u.hexCoords) == 1) return true;
+            }
+        }
+        return false;
     }
 }

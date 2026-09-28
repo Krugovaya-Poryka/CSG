@@ -20,8 +20,8 @@ public class BattleInputHandler : MonoBehaviour
 
     private void Awake()
     {
-        if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
-        if (gridManager == null) gridManager = FindFirstObjectByType<HexGridManager>();
+        if (turnManager == null) turnManager = FindAnyObjectByType<TurnManager>();
+        if (gridManager == null) gridManager = FindAnyObjectByType<HexGridManager>();
     }
 
     void Update()
@@ -233,7 +233,7 @@ public class BattleInputHandler : MonoBehaviour
 
         HashSet<Vector2Int> blockedHexes = new HashSet<Vector2Int>();
 
-        BattleHex[] allHexes = FindObjectsByType<BattleHex>(FindObjectsSortMode.None);
+        BattleHex[] allHexes = FindObjectsByType<BattleHex>();
         foreach (var hex in allHexes)
         {
             if (!hex.walkable) blockedHexes.Add(new Vector2Int(hex.x, hex.y));

@@ -2,21 +2,23 @@
 left to right direction
 skinparam packageStyle rectangle
 
+' Стилізація як на малюнку
+skinparam rectangle {
+    BackgroundColor white
+    BorderColor black
+}
+skinparam package {
+    BackgroundColor white
+    BorderColor black
+}
+
 actor "Гравець (Human Player)" as Player
 actor "Комп'ютерний опонент (AI)" as AI
 actor "Система / TurnManager" as System
 
 rectangle "Покрокова Стратегія (Game System)" {
 
-    package "Основний функціонал та Дані" {
-        usecase "UC-1: Запустити нову гру" as UC1
-        usecase "UC-2: Завантажити вхідні дані" as UC2
-        usecase "UC-3: Зберегти результати гри" as UC3
-        usecase "UC-4: Завантажити збереження" as UC4
-        usecase "UC-5: Пошук об'єктів" as UC5
-        usecase "UC-6: Сортування об'єктів\n(за швидкістю/типом)" as UC6
-    }
-
+    ' Лівий верхній пакет
     package "Глобальна Карта та Економіка" {
         usecase "UC-7: Пересувати героя по сітці" as UC7
         usecase "UC-8: Взаємодіяти з об'єктами" as UC8
@@ -26,6 +28,25 @@ rectangle "Покрокова Стратегія (Game System)" {
         usecase "UC-21: Переглянути характеристики" as UC21
     }
 
+    ' Правий верхній пакет
+    package "Основний функціонал та Дані" {
+        usecase "UC-1: Запустити нову гру" as UC1
+        usecase "UC-2: Завантажити вхідні дані" as UC2
+        usecase "UC-3: Зберегти результати гри" as UC3
+        usecase "UC-4: Завантажити збереження" as UC4
+        usecase "UC-5: Пошук об'єктів" as UC5
+        usecase "UC-6: Сортування об'єктів\n(за швидкістю/типом)" as UC6
+    }
+
+    ' Лівий нижній пакет
+    package "Тактичний Бій" {
+        usecase "UC-16: Ініціалізувати бій" as UC16
+        usecase "UC-17: Зробити хід юнітом" as UC17
+        usecase "UC-18: Атакувати ворога" as UC18
+        usecase "UC-19: Завершити бій" as UC19
+    }
+
+    ' Правий нижній пакет (блакитний)
     package "Модуль ШІ (Зона відповідальності ШІ)" #LightBlue {
         usecase "UC-11: Обчислити хід ШІ" as UC11
         usecase "UC-12: Проаналізувати стан карти" as UC12
@@ -37,16 +58,17 @@ rectangle "Покрокова Стратегія (Game System)" {
         usecase "UC-24: Створити / знищити ШІ-юніт" as UC24
         usecase "UC-25: Налаштувати складність ШІ" as UC25
     }
-
-    package "Тактичний Бій" {
-        usecase "UC-16: Ініціалізувати бій" as UC16
-        usecase "UC-17: Зробити хід юнітом" as UC17
-        usecase "UC-18: Атакувати ворога" as UC18
-        usecase "UC-19: Завершити бій" as UC19
-    }
 }
 
-' Зв'язки Гравця
+' Приховане вирівнювання пакетів 2x2 дляPlantUML
+"Глобальна Карта та Економіка" -[hidden]right-> "Основний функціонал та Дані"
+"Глобальна Карта та Економіка" -[hidden]down-> "Тактичний Бій"
+"Основний функціонал та Дані" -[hidden]down-> "Модуль ШІ (Зона відповідальності ШІ)"
+
+' ==========================================
+' ЗВ'ЯЗКИ АКТОРІВ (Згідно з вашим кодом)
+' ==========================================
+
 Player --> UC1
 Player --> UC3
 Player --> UC4
@@ -60,33 +82,35 @@ Player --> UC20
 Player --> UC21
 Player --> UC25
 
-' Зв'язки ШІ
 AI --> UC11
 AI --> UC15
 
-' Зв'язки Системи
 System --> UC2
 System --> UC16
 System --> UC24
 
+' ==========================================
+' ВНУТРІШНІ ЗВ'ЯЗКИ (Include / Extend)
+' ==========================================
+
 ' Основний функціонал
-UC1 ..> UC2 : <<include>>
-UC20 ..> UC11 : <<include>> (передача ходу)
+UC1 .right.> UC2 : <<include>>
+UC20 .down.> UC11 : <<include>> (передача ходу)
 
 ' Модуль ШІ
-UC11 ..> UC12 : <<include>>
-UC11 ..> UC14 : <<include>>
-UC11 ..> UC22 : <<include>>
-UC15 ..> UC14 : <<include>>
-UC14 <.. UC13 : <<extend>>
-UC22 <.. UC23 : <<extend>> (якщо ворог сильніший)
+UC11 .right.> UC14 : <<include>>
+UC11 .down.> UC12 : <<include>>
+UC11 .up.> UC22 : <<include>>
+UC15 .right.> UC14 : <<include>>
+UC14 <.right. UC13 : <<extend>>
+UC22 <.right. UC23 : <<extend>> (якщо ворог сильніший)
 
 ' Глобальна карта
-UC7 <.. UC8 : <<extend>>
-UC7 <.. UC16 : <<extend>> (при зіткненні)
+UC7 <.right. UC8 : <<extend>>
+UC7 <.down. UC16 : <<extend>> (при зіткненні)
 
 ' Бій
-UC17 ..> UC18 : <<include>>
-UC18 <.. UC19 : <<extend>> (якщо одна зі сторін знищена)
+UC17 .right.> UC18 : <<include>>
+UC18 <.right. UC19 : <<extend>> (якщо одна зі сторін знищена)
 
 @enduml

@@ -1,0 +1,90 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Гравець (Human Player)" as Player
+actor "Комп'ютерний опонент (AI)" as AI
+actor "Система / TurnManager" as System
+
+rectangle "Покрокова Стратегія (Game System)" {
+    
+    package "Основний функціонал та Дані" {
+        usecase "UC-1: Запустити нову гру" as UC1
+        usecase "UC-2: Завантажити вхідні дані" as UC2
+        usecase "UC-3: Зберегти результати гри" as UC3
+        usecase "UC-4: Завантажити збереження" as UC4
+        usecase "UC-5: Пошук об'єктів" as UC5
+        usecase "UC-6: Сортування об'єктів\n(за швидкістю/типом)" as UC6
+    }
+
+    package "Глобальна Карта та Економіка" {
+        usecase "UC-7: Пересувати героя по сітці" as UC7
+        usecase "UC-8: Взаємодіяти з об'єктами" as UC8
+        usecase "UC-9: Наймати війська" as UC9
+        usecase "UC-10: Керувати армією" as UC10
+        usecase "UC-20: Завершити хід" as UC20
+        usecase "UC-21: Переглянути характеристики" as UC21
+    }
+
+    package "Модуль ШІ (Зона відповідальності ШІ)" #LightBlue {
+        usecase "UC-11: Обчислити хід ШІ" as UC11
+        usecase "UC-12: Проаналізувати стан карти" as UC12
+        usecase "UC-13: Прийняти рішення про найм" as UC13
+        usecase "UC-14: Обрати ціль та шлях ШІ" as UC14
+        usecase "UC-15: Прийняти рішення в бою ШІ" as UC15
+        usecase "UC-22: Оцінити співвідношення сил" as UC22
+        usecase "UC-23: Відступити / Втекти" as UC23
+    }
+
+    package "Тактичний Бій" {
+        usecase "UC-16: Ініціалізувати бій" as UC16
+        usecase "UC-17: Зробити хід юнітом" as UC17
+        usecase "UC-18: Атакувати ворога" as UC18
+        usecase "UC-19: Завершити бій" as UC19
+    }
+}
+
+' Зв'язки Гравця (Пряма взаємодія)
+Player --> UC1
+Player --> UC3
+Player --> UC4
+Player --> UC7
+Player --> UC9
+Player --> UC10
+Player --> UC17
+Player --> UC20
+Player --> UC21
+
+' Зв'язки ШІ (Пряма взаємодія)
+AI --> UC11
+AI --> UC15
+
+' Зв'язки Системи
+System --> UC2
+System --> UC5
+System --> UC6
+System --> UC16
+
+' Internal Relationship Arrows (Include / Extend)
+UC1 ..> UC2 : <<include>>
+UC20 ..> UC11 : <<include>> (передача ходу)
+
+' ШІ зв'язки (Деталізація вашої частини)
+UC11 ..> UC12 : <<include>>
+UC11 ..> UC14 : <<include>>
+UC11 ..> UC22 : <<include>>
+UC14 <.. UC13 : <<extend>>
+UC22 <.. UC23 : <<extend>> (якщо ворог сильніший)
+
+' Глобальна карта зв'язки
+UC7 ..> UC21 : <<include>>
+UC7 <.. UC8 : <<extend>>
+UC7 <.. UC16 : <<extend>> (при зіткненні)
+
+' Бій зв'язки
+UC17 ..> UC6 : <<include>>
+UC15 ..> UC18 : <<include>>
+UC17 ..> UC18 : <<include>>
+UC18 ..> UC19 : <<include>>
+
+@enduml

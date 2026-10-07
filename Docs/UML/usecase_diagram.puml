@@ -7,7 +7,7 @@ actor "Комп'ютерний опонент (AI)" as AI
 actor "Система / TurnManager" as System
 
 rectangle "Покрокова Стратегія (Game System)" {
-    
+
     package "Основний функціонал та Дані" {
         usecase "UC-1: Запустити нову гру" as UC1
         usecase "UC-2: Завантажити вхідні дані" as UC2
@@ -34,6 +34,8 @@ rectangle "Покрокова Стратегія (Game System)" {
         usecase "UC-15: Прийняти рішення в бою ШІ" as UC15
         usecase "UC-22: Оцінити співвідношення сил" as UC22
         usecase "UC-23: Відступити / Втекти" as UC23
+        usecase "UC-24: Створити / знищити ШІ-юніт" as UC24
+        usecase "UC-25: Налаштувати складність ШІ" as UC25
     }
 
     package "Тактичний Бій" {
@@ -44,47 +46,47 @@ rectangle "Покрокова Стратегія (Game System)" {
     }
 }
 
-' Зв'язки Гравця (Пряма взаємодія)
+' Зв'язки Гравця
 Player --> UC1
 Player --> UC3
 Player --> UC4
+Player --> UC5
+Player --> UC6
 Player --> UC7
 Player --> UC9
 Player --> UC10
 Player --> UC17
 Player --> UC20
 Player --> UC21
+Player --> UC25
 
-' Зв'язки ШІ (Пряма взаємодія)
+' Зв'язки ШІ
 AI --> UC11
 AI --> UC15
 
 ' Зв'язки Системи
 System --> UC2
-System --> UC5
-System --> UC6
 System --> UC16
+System --> UC24
 
-' Internal Relationship Arrows (Include / Extend)
+' Основний функціонал
 UC1 ..> UC2 : <<include>>
 UC20 ..> UC11 : <<include>> (передача ходу)
 
-' ШІ зв'язки (Деталізація вашої частини)
+' Модуль ШІ
 UC11 ..> UC12 : <<include>>
 UC11 ..> UC14 : <<include>>
 UC11 ..> UC22 : <<include>>
+UC15 ..> UC14 : <<include>>
 UC14 <.. UC13 : <<extend>>
 UC22 <.. UC23 : <<extend>> (якщо ворог сильніший)
 
-' Глобальна карта зв'язки
-UC7 ..> UC21 : <<include>>
+' Глобальна карта
 UC7 <.. UC8 : <<extend>>
 UC7 <.. UC16 : <<extend>> (при зіткненні)
 
-' Бій зв'язки
-UC17 ..> UC6 : <<include>>
-UC15 ..> UC18 : <<include>>
+' Бій
 UC17 ..> UC18 : <<include>>
-UC18 ..> UC19 : <<include>>
+UC18 <.. UC19 : <<extend>> (якщо одна зі сторін знищена)
 
 @enduml

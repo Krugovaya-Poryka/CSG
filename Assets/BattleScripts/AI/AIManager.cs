@@ -1,10 +1,17 @@
-using UnityEngine;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEngine;
 
+/// <summary>
+/// ЛР1: Менеджер ШІ. Патерни: Одинак (Singleton) + Фасад (Facade).
+/// Реалізує прецеденти: UC-11, UC-24, UC-25, UC-3/UC-4 (історія боїв), UC-5, UC-6.
+/// </summary>
 public class AIManager : MonoBehaviour
 {
+    // ---------- Singleton ----------
     private static AIManager instance;
-    
+
     public static AIManager Instance
     {
         get
@@ -12,7 +19,6 @@ public class AIManager : MonoBehaviour
             if (instance == null)
             {
                 instance = FindAnyObjectByType<AIManager>();
-
                 if (instance == null)
                 {
                     GameObject go = new GameObject("AIManager");
@@ -23,16 +29,21 @@ public class AIManager : MonoBehaviour
         }
     }
 
-    private Dictionary<string, AIUnit> activeAIUnits = new Dictionary<string, AIUnit>();
-    private AIDifficulty currentDifficulty = AIDifficulty.Normal;
-    private int aiUnitCounter = 0;
-
     public enum AIDifficulty
     {
         Easy = 0,
         Normal = 1,
         Hard = 2
     }
+
+    // ---------- Поля ----------
+    private readonly Dictionary<string, AIUnit> activeAIUnits = new Dictionary<string, AIUnit>();
+    private AIDifficulty currentDifficulty = AIDifficulty.Normal;
+    private int totalCreated = 0;
+
+    private string SavePath => Path.Combine(Application.persistentDataPath, "battle_history.txt");
+
+    public int TotalCreated => totalCreated;
 
     private void Awake()
     {
@@ -44,94 +55,126 @@ public class AIManager : MonoBehaviour
 
         instance = this;
         DontDestroyOnLoad(gameObject);
-        
-        Debug.Log("<color=green>[+] AIManager initialized (Singleton)</color>");
+        Debug.Log("[+] AIManager initialized (Singleton)");
     }
 
+    // ---------- UC-25: складність ----------
     public void SetDifficulty(AIDifficulty difficulty)
     {
         currentDifficulty = difficulty;
-        Debug.Log($"<color=yellow>[CONFIG] AI Difficulty set to: {difficulty}</color>");
+        Debug.Log($"[CONFIG] AI Difficulty set to: {difficulty}");
     }
 
-    public AIDifficulty GetDifficulty()
-    {
-        return currentDifficulty;
-    }
+    public AIDifficulty GetDifficulty() => currentDifficulty;
 
+    // ---------- UC-24: створення / знищення ----------
     public AIUnit CreateAI(string unitName, Vector3 startPosition)
     {
-        if (activeAIUnits.ContainsKey(unitName))
+        if (string.IsNullOrEmpty(unitName))
         {
-            Debug.LogError($"<color=red>[-] AI with name '{unitName}' already exists!</color>");
+            Debug.LogError("[-] AI name must not be empty!");
             return null;
         }
-        
+
+        if (activeAIUnits.ContainsKey(unitName))
+        {
+            Debug.LogError($"[-] AI with name '{unitName}' already exists!");
+            return null;
+        }
+
         GameObject aiGameObject = new GameObject($"AI_{unitName}");
         aiGameObject.transform.position = startPosition;
 
         AIUnit newAI = aiGameObject.AddComponent<AIUnit>();
-        /*.Initialize(unitName, currentDifficulty, startPosition);*/
+        newAI.Initialize(unitName, currentDifficulty);
 
         activeAIUnits[unitName] = newAI;
-        aiUnitCounter++;
-        
-        Debug.Log($"<color=cyan>[+] New AI unit created: '{unitName}' at position: {startPosition}</color>");
+        totalCreated++;
+
+        Debug.Log($"[+] New AI unit created: '{unitName}' ({currentDifficulty}) at {startPosition}");
         return newAI;
     }
 
     public void DestroyAI(string unitName)
     {
-        if (!activeAIUnits.ContainsKey(unitName))
+        if (!activeAIUnits.TryGetValue(unitName, out AIUnit aiUnit))
         {
-            Debug.LogWarning($"<color=orange>[!] AI '{unitName}' not found!</color>");
+            Debug.LogWarning($"[!] AI '{unitName}' not found!");
             return;
         }
-        
-        AIUnit aiUnit = activeAIUnits[unitName];
-        activeAIUnits.Remove(unitName);
 
-        Destroy(aiUnit.gameObject);
-        Debug.Log($"<color=magenta>[-] AI unit '{unitName}' destroyed</color>");
+        activeAIUnits.Remove(unitName);
+        Destroy(aiUnit.gameObject); // реально знищується наприкінці кадру
+        Debug.Log($"[-] AI unit '{unitName}' destroyed");
     }
 
+    // ---------- UC-5: пошук ----------
     public AIUnit GetAI(string unitName)
     {
-        if (activeAIUnits.ContainsKey(unitName))
-        {
-            return activeAIUnits[unitName];
-        }
-        
-        Debug.LogWarning($"<color=orange>[!] AI '{unitName}' not found!</color>");
+        if (activeAIUnits.TryGetValue(unitName, out AIUnit unit)) return unit;
+
+        Debug.LogWarning($"[!] AI '{unitName}' not found!");
         return null;
     }
-    
-    public int GetActiveAICount()
+
+    public List<AIUnit> FindAIByDifficulty(AIDifficulty difficulty)
     {
-        return activeAIUnits.Count;
+        return activeAIUnits.Values.Where(u => u.Difficulty == difficulty).ToList();
     }
 
-    public List<AIUnit> GetAllActiveAI()
+    public int GetActiveAICount() => activeAIUnits.Count;
+
+    // Повертаємо копію, щоб зовнішній код не міг змінити внутрішню колекцію
+    public List<AIUnit> GetAllActiveAI() => new List<AIUnit>(activeAIUnits.Values);
+
+    // ---------- UC-6: сортування ----------
+    public List<AIUnit> GetAISortedByName()
     {
-        return new List<AIUnit>(activeAIUnits.Values);
+        return activeAIUnits.Values.OrderBy(u => u.UnitName).ToList();
     }
 
+    // ---------- UC-11: обчислити хід ШІ (фасад над AIUnit) ----------
+    public bool ComputeTurn(string unitName, List<BattleUnit> allUnits, System.Action onTurnComplete)
+    {
+        if (!activeAIUnits.TryGetValue(unitName, out AIUnit unit))
+        {
+            Debug.LogWarning($"[!] ComputeTurn: AI '{unitName}' not found!");
+            return false;
+        }
+
+        unit.MakeAutonomousDecision(allUnits, onTurnComplete);
+        return true;
+    }
+
+    // ---------- UC-3 / UC-4: збереження та завантаження історії боїв ----------
     public void SaveBattleResult(string battleResult, string aiName)
     {
         string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        string saveData = $"[{timestamp}] AI: {aiName}, Result: {battleResult}";
+        string line = $"[{timestamp}] AI: {aiName}, Result: {battleResult}";
 
-        Debug.Log($"<color=green>[SAVE] Result saved: {saveData}</color>");
+        File.AppendAllText(SavePath, line + "\n");
+        Debug.Log($"[SAVE] {line}");
     }
-    
+
     public string LoadBattleHistory()
     {
-        Debug.Log("<color=blue>[LOAD] Loading battle history...</color>");
-        return "History loaded";
+        if (!File.Exists(SavePath))
+        {
+            Debug.Log("[LOAD] No history file yet");
+            return string.Empty;
+        }
+
+        Debug.Log("[LOAD] Loading battle history...");
+        return File.ReadAllText(SavePath);
     }
 
-    private void LogAIStatus()
+    public void ClearBattleHistory()
     {
-        Debug.Log($"<color=cyan>[STATUS] AIManager: {GetActiveAICount()} active AI</color>");
+        if (File.Exists(SavePath)) File.Delete(SavePath);
+    }
+
+    public void LogAIStatus()
+    {
+        Debug.Log($"[STATUS] AIManager: {GetActiveAICount()} active AI, created total: {totalCreated}");
     }
 }

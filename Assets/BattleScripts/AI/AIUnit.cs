@@ -1,18 +1,38 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// ШІ-юніт: приймає автономні рішення в покроковому бою на гексовій сітці.
+/// ЛР1: власні дані (ім'я, складність), Initialize, OnDestroy, «чиста» логіка UC-22/UC-23.
+/// </summary>
 public class AIUnit : MonoBehaviour
 {
+    // ---------- ЛР1: власні дані об'єкта ----------
+    public string UnitName { get; private set; }
+    public AIManager.AIDifficulty Difficulty { get; private set; }
+
+    // ---------- Залежності від колег (юніти та карта) ----------
     private BattleUnit myUnit;
     private HexGridManager gridManager;
 
     private void Awake()
     {
         myUnit = GetComponent<BattleUnit>();
-        // Замінено на FindAnyObjectByType
         gridManager = FindAnyObjectByType<HexGridManager>();
+    }
+
+    // Заміна конструктора для MonoBehaviour: викликається менеджером після AddComponent
+    public void Initialize(string unitName, AIManager.AIDifficulty difficulty)
+    {
+        UnitName = unitName;
+        Difficulty = difficulty;
+    }
+
+    // Знищення: аналог деструктора
+    private void OnDestroy()
+    {
+        Debug.Log($"[-] AIUnit '{UnitName}' OnDestroy called");
     }
 
     public bool IsAlive()
@@ -20,8 +40,28 @@ public class AIUnit : MonoBehaviour
         return myUnit != null && myUnit.stackSize > 0;
     }
 
+    // ---------- UC-22: оцінити співвідношення сил ----------
+    public float EvaluateForceRatio(int myPower, int enemyPower)
+    {
+        if (enemyPower <= 0) return float.PositiveInfinity;
+        return (float)myPower / enemyPower;
+    }
+
+    // ---------- UC-23: відступити (extend від UC-22, якщо ворог сильніший) ----------
+    public bool ShouldRetreat(int myPower, int enemyPower)
+    {
+        float threshold;
+        switch (Difficulty)
+        {
+            case AIManager.AIDifficulty.Easy: threshold = 0.25f; break;
+            case AIManager.AIDifficulty.Hard: threshold = 0.75f; break;
+            default: threshold = 0.5f; break;
+        }
+        return EvaluateForceRatio(myPower, enemyPower) < threshold;
+    }
+
     /// <summary>
-    /// Головний метод прийняття рішення ШІ для покрокового бою HoMM3
+    /// UC-14 / UC-15: головний метод прийняття рішення ШІ для покрокового бою HoMM3
     /// </summary>
     public void MakeAutonomousDecision(List<BattleUnit> allUnits, Action onTurnComplete)
     {
@@ -31,7 +71,7 @@ public class AIUnit : MonoBehaviour
             return;
         }
 
-        if (gridManager == null) gridManager = FindFirstObjectByType<HexGridManager>();
+        if (gridManager == null) gridManager = FindAnyObjectByType<HexGridManager>();
 
         // 1. Пошук ворожих юнітів
         List<BattleUnit> enemies = new List<BattleUnit>();
@@ -49,7 +89,7 @@ public class AIUnit : MonoBehaviour
             return;
         }
 
-        // 2. Вибір найближчого ворога (за відстані на гексовій сітці)
+        // 2. Вибір найближчого ворога (за відстанню на гексовій сітці)
         BattleUnit target = GetClosestEnemy(enemies);
         if (target == null)
         {
@@ -82,7 +122,7 @@ public class AIUnit : MonoBehaviour
     {
         HashSet<Vector2Int> blockedHexes = GetBlockedHexes(allUnits);
 
-        // Пошук досяжних гексів з урахуванням швидкості та типів юніта (літаючий/наземний)
+        // Пошук досяжних гексів з урахуванням швидкості та типу юніта (літаючий/наземний)
         var pathMap = HexPathfinding.FindReachableArea(
             myUnit.hexCoords,
             myUnit.data.speed,
@@ -151,7 +191,6 @@ public class AIUnit : MonoBehaviour
     {
         HashSet<Vector2Int> blocked = new HashSet<Vector2Int>();
 
-        // Замінено на FindObjectsByType без FindObjectsSortMode
         BattleHex[] hexes = FindObjectsByType<BattleHex>(FindObjectsInactive.Exclude);
 
         foreach (var h in hexes)

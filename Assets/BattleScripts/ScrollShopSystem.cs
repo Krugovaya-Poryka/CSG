@@ -1,82 +1,97 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-// Клас, що відповідає за магазин та покупку 20 свитків і заклинань
+public class ScrollItem
+{
+    public string Name { get; set; }
+    public int Price { get; set; }
+    public int Stock { get; set; }
+
+    public ScrollItem(string name, int price, int stock)
+    {
+        Name = name;
+        Price = price;
+        Stock = stock;
+    }
+}
+
 public class ScrollShopSystem
 {
     // --- ДАНІ (Поля класу) ---
     public int Gold { get; private set; } // Золото гравця
 
-    // Масив із 20 свитків заклинань (назви та ціни)
-    private string[] scrollNames = new string[20]
-    {
-        "Свиток Вогняна куля", "Свиток Крижана стріла", "Свиток Блискавка", "Свиток Зцілення", "Свиток Щит магії",
-        "Свиток Телепортація", "Свиток Отруйна хмара", "Свиток Метеоритний дощ", "Свиток Невидимість", "Свиток Ланцюгова блискавка",
-        "Свиток Заклинання сили", "Свиток Швидкість вітру", "Свиток Водяний щит", "Свиток Землетрус", "Свиток Благословення",
-        "Свиток Прокляття", "Свиток Пошук скарбів", "Свиток Воскресіння", "Свиток Вогняна стіна", "Свиток Абсолютний захист"
-    };
-
-    private int[] scrollPrices = new int[20]
-    {
-        150, 120, 200, 100, 180, 250, 160, 400, 300, 220,
-        130, 110, 140, 350, 190, 210, 80, 500, 240, 450
-    };
-
-    private int[] scrollStock = new int[20]; // Кількість кожного свитка в наявності
+    private List<ScrollItem> availableScrolls = new List<ScrollItem>();
 
     // --- КОНСТРУКТОР ---
     public ScrollShopSystem(int startGold)
     {
         Gold = startGold;
+        InitializeCatalog();
 
-        // На старті в магазині є по 3 штуки кожного з 20 свитків
-        for (int i = 0; i < 20; i++)
-        {
-            scrollStock[i] = 3;
-        }
+        Debug.Log($"[ScrollShop] Магазин свитків і магії відкрито. Золото гравця: {Gold}. Асортимент: {availableScrolls.Count} унікальних свитків.");
+    }
 
-        Debug.Log($"[ScrollShop] Магазин свитків і магії відкрито. Золото гравця: {Gold}. Асортимент: 20 унікальних свитків.");
+    private void InitializeCatalog()
+    {
+        availableScrolls.Add(new ScrollItem("Свиток Вогняна куля", 150, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Крижана стріла", 120, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Блискавка", 200, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Зцілення", 100, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Щит магії", 180, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Телепортація", 250, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Отруйна хмара", 160, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Метеоритний дощ", 400, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Невидимість", 300, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Ланцюгова блискавка", 220, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Заклинання сили", 130, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Швидкість вітру", 110, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Водяний щит", 140, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Землетрус", 350, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Благословення", 190, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Прокляття", 210, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Пошук скарбів", 80, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Воскресіння", 500, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Вогняна стіна", 240, 3));
+        availableScrolls.Add(new ScrollItem("Свиток Абсолютний захист", 450, 3));
     }
 
     // --- МЕТОД ВИВЕДЕННЯ КАТАЛОГУ ВСІХ 20 СВИТКІВ ---
     public void ShowCatalog()
     {
-        Debug.Log("--- КАТАЛОГ СВИТКІВ ТА ЗАКЛИНАНЬ (20 шт.) ---");
-        for (int i = 0; i < 20; i++)
+        Debug.Log("--- КАТАЛОГ СВИТКІВ ТА ЗАКЛИНАНЬ (List<ScrollItem>) ---");
+        for (int i = 0; i < availableScrolls.Count; i++)
         {
-            Debug.Log($"[{i}] {scrollNames[i]} — Ціна: {scrollPrices[i]} золота | В наявності: {scrollStock[i]} шт.");
+            ScrollItem scroll = availableScrolls[i];
+            Debug.Log($"[{i}] {scroll.Name} — Ціна: {scroll.Price} золота | В наявності: {scroll.Stock} шт.");
         }
     }
 
     // --- МЕТОД ПОКУПКИ СВИТКА ЗА ІНДЕКСОМ (від 0 до 19) ---
     public void BuyScroll(int index)
     {
-        // Перевірка, чи існує такий свиток у каталозі
-        if (index < 0 || index >= 20)
+        if (index < 0 || index >= availableScrolls.Count)
         {
             Debug.Log("[ScrollShop] Помилка: Такого свитка не існує в каталозі!");
             return;
         }
 
-        // Перевірка наявності в магазині
-        if (scrollStock[index] <= 0)
+        ScrollItem scroll = availableScrolls[index];
+
+        if (scroll.Stock <= 0)
         {
-            Debug.Log($"[ScrollShop] Помилка: Свиток '{scrollNames[index]}' повністю розкуплено!");
+            Debug.Log($"[ScrollShop] Помилка: Свиток '{scroll.Name}' повністю розкуплено!");
             return;
         }
 
-        int price = scrollPrices[index];
-
-        // Перевірка золота
-        if (Gold < price)
+        if (Gold < scroll.Price)
         {
-            Debug.Log($"[ScrollShop] Помилка: Бракує золота для покупки '{scrollNames[index]}' (Потрібно {price}, а у вас {Gold}).");
+            Debug.Log($"[ScrollShop] Помилка: Бракує золота для покупки '{scroll.Name}' (Потрібно {scroll.Price}, а у вас {Gold}).");
             return;
         }
 
-        // Виконання покупки
-        Gold -= price;
-        scrollStock[index]--;
-        Debug.Log($"[ScrollShop] УСПІХ! Куплено '{scrollNames[index]}' за {price} золота. Залишок золота: {Gold}. Залишилось в магазині: {scrollStock[index]} шт.");
+        Gold -= scroll.Price;
+        scroll.Stock--;
+        Debug.Log($"[ScrollShop] УСПІХ! Куплено '{scroll.Name}' за {scroll.Price} золота. Залишок золота: {Gold}. Залишилось в магазині: {scroll.Stock} шт.");
     }
 
     // --- ЗАКРИТТЯ / ОЧИЩЕННЯ ---

@@ -1,78 +1,90 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-// Клас, що відповідає за всю логіку найму військ і героїв у замку
+public class RecruitUnitItem
+{
+    public string Name { get; set; }
+    public int AvailableCount { get; set; }
+    public int Price { get; set; }
+
+    public RecruitUnitItem(string name, int availableCount, int price)
+    {
+        Name = name;
+        AvailableCount = availableCount;
+        Price = price;
+    }
+}
+
 public class RecruitmentSystem
 {
     // --- ДАНІ (Поля класу) ---
-    public int Gold { get; private set; }              // Золото гравця для покупок
-    public int AvailableSwordsmen { get; private set; } // Доступно мечників
-    public int AvailableArchers { get; private set; }   // Доступно лучників
-    public bool IsHeroHired { get; private set; }       // Чи найнятий уже головний герой
+    public int Gold { get; private set; }       
+    public bool IsHeroHired { get; private set; }     
 
-    // Ціни (константи)
-    private const int SwordsmanPrice = 100;
-    private const int ArcherPrice = 150;
-    private const int HeroPrice = 1000;
+    private List<RecruitUnitItem> availableTroops = new List<RecruitUnitItem>();
 
-    // --- КОНСТРУКТОР (Ініціалізація найму при вході в таверну/казарму) ---
+    private int heroPrice = 1000; 
+
+    // --- КОНСТРУКТОР ---
     public RecruitmentSystem(int startGold)
     {
         Gold = startGold;
-        AvailableSwordsmen = 10; // На початку доступно 10 мечників
-        AvailableArchers = 5;     // На початку доступно 5 лучників
-        IsHeroHired = false;      // Герой ще не найнятий
+        IsHeroHired = false;
 
-        Debug.Log($"[Recruitment] Система найму готова. Золото: {Gold}. Доступно: Мечників - {AvailableSwordsmen}, Лучників - {AvailableArchers}.");
+        InitializeTroops();
+
+        Debug.Log($"[Recruitment] Система найму готова. Золото: {Gold}. Доступно типів військ у списку: {availableTroops.Count}.");
     }
 
-    // --- МЕТОДИ НАЙМУ ЮНІТІВ ---
-
-    // Найм Мечників
-    public void HireSwordsmen(int count)
+    private void InitializeTroops()
     {
-        int totalCost = count * SwordsmanPrice;
+        availableTroops.Add(new RecruitUnitItem("Мечник", 10, 100));
 
-        if (count > AvailableSwordsmen)
+        availableTroops.Add(new RecruitUnitItem("Лучник", 5, 150));
+    }
+
+    // --- МЕТОД ВИВЕДЕННЯ КАТАЛОГУ ВІЙСЬК ---
+    public void ShowTroopsCatalog()
+    {
+        Debug.Log("--- КАТАЛОГ ДОСТУПНИХ ВІЙСЬК (List<RecruitUnitItem>) ---");
+        for (int i = 0; i < availableTroops.Count; i++)
         {
-            Debug.Log($"[Recruitment] Помилка: Не можна найняти {count} мечників, доступно лише {AvailableSwordsmen}!");
+            RecruitUnitItem troop = availableTroops[i];
+            Debug.Log($"[{i}] {troop.Name} — Ціна: {troop.Price} золота | Доступно для найму: {troop.AvailableCount} шт.");
+        }
+    }
+
+    // --- МЕТОДИ НАЙМУ ЮНІТІВ ЗА ІНДЕКСОМ У КОЛЕКЦІЇ ---
+    public void HireTroops(int troopIndex, int count)
+    {
+        // Перевірка, чи існує такий юніт у списку
+        if (troopIndex < 0 || troopIndex >= availableTroops.Count)
+        {
+            Debug.Log("[Recruitment] Помилка: Такого типу військ не існує в каталозі!");
+            return;
+        }
+
+        RecruitUnitItem troop = availableTroops[troopIndex];
+        int totalCost = count * troop.Price;
+
+        if (count > troop.AvailableCount)
+        {
+            Debug.Log($"[Recruitment] Помилка: Не можна найняти {count} од. '{troop.Name}', доступно лише {troop.AvailableCount}!");
             return;
         }
 
         if (Gold < totalCost)
         {
-            Debug.Log($"[Recruitment] Помилка: Бракує золота! Потрібно {totalCost}, а у вас {Gold}.");
+            Debug.Log($"[Recruitment] Помилка: Бракує золота для найму '{troop.Name}'! Потрібно {totalCost}, а у вас {Gold}.");
             return;
         }
 
         Gold -= totalCost;
-        AvailableSwordsmen -= count;
-        Debug.Log($"[Recruitment] Найнято {count} мечників за {totalCost} золота! Залишилося золота: {Gold}, залишилося мечників: {AvailableSwordsmen}.");
-    }
-
-    // Найм Лучників
-    public void HireArchers(int count)
-    {
-        int totalCost = count * ArcherPrice;
-
-        if (count > AvailableArchers)
-        {
-            Debug.Log($"[Recruitment] Помилка: Недостатньо доступних лучників!");
-            return;
-        }
-
-        if (Gold < totalCost)
-        {
-            Debug.Log($"[Recruitment] Помилка: Бракує золота для покупки лучників!");
-            return;
-        }
-
-        Gold -= totalCost;
-        AvailableArchers -= count;
-        Debug.Log($"[Recruitment] Найнято {count} лучників за {totalCost} золота! Залишилося золота: {Gold}.");
+        troop.AvailableCount -= count;
+        Debug.Log($"[Recruitment] УСПІХ! Найнято {count} од. '{troop.Name}' за {totalCost} золота! Залишилося золота: {Gold}, залишилося в замку: {troop.AvailableCount}.");
     }
 
     // --- МЕТОД НАЙМУ ГЕРОЯ ---
-
     public void HireHero(string heroName)
     {
         if (IsHeroHired)
@@ -81,15 +93,15 @@ public class RecruitmentSystem
             return;
         }
 
-        if (Gold < HeroPrice)
+        if (Gold < heroPrice)
         {
-            Debug.Log($"[Recruitment] Помилка: Бракує {HeroPrice - Gold} золота для найму героя {heroName}!");
+            Debug.Log($"[Recruitment] Помилка: Бракує {heroPrice - Gold} золота для найму героя {heroName}!");
             return;
         }
 
-        Gold -= HeroPrice;
+        Gold -= heroPrice;
         IsHeroHired = true;
-        Debug.Log($"[Recruitment] УРА! Герой '{heroName}' успішно найнятий за {HeroPrice} золота! Залишок золота: {Gold}.");
+        Debug.Log($"[Recruitment] УРА! Герой '{heroName}' успішно найнятий за {heroPrice} золота! Залишок золота: {Gold}.");
     }
 
     public void CloseRecruitment()

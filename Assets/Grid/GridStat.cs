@@ -12,6 +12,8 @@ public class GridStat : MonoBehaviour
     public int movementCost;
     public bool canCastleSpawn = false;
     public GameObject castlePrefab;
+    // Runtime link from the walkable entrance to the castle at the footprint centre.
+    [System.NonSerialized] public Castle castle;
 
     public enum TileType
     {

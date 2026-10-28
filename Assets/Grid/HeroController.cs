@@ -11,6 +11,25 @@ public class HeroController : MonoBehaviour
     
     public int teamId;
     
+    [Header("Hero composition")]
+    public HeroStats stats = new HeroStats();
+    public HeroInventory inventory = new HeroInventory();
+    // Assign in the Inspector, or use an existing component on this hero/its children.
+    public HeroArmy army;
+
+    public int Attack => (stats != null ? stats.attack : 0) + (inventory != null ? inventory.AttackBonus : 0);
+    public int Defense => (stats != null ? stats.defense : 0) + (inventory != null ? inventory.DefenseBonus : 0);
+
+    private void Awake()
+    {
+        if (stats == null)
+            stats = new HeroStats();
+        if (inventory == null)
+            inventory = new HeroInventory();
+        if (army == null)
+            army = GetComponentInChildren<HeroArmy>(true);
+    }
+
     [Header("Movement")]
     public int maxMovementPoints = 30;
     public int movementPoints = 30;
@@ -31,7 +50,17 @@ public class HeroController : MonoBehaviour
     
     private void Start()
     {
+        TeamManager.EnsureExists();
+        if (TeamManager.Instance != null)
+            TeamManager.Instance.RegisterHero(this);
+        HeroDetailsPanel.EnsureExists();
         UpdateGridPosition();
+    }
+
+    private void OnDestroy()
+    {
+        if (TeamManager.Instance != null)
+            TeamManager.Instance.UnregisterHero(this);
     }
 
     private void Update()
@@ -40,12 +69,12 @@ public class HeroController : MonoBehaviour
             MoveAlongPath();
     }
     
-    public GridStat lastTarget;
-
     private List<GameObject> pathMarkers = new List<GameObject>();
     
     public void PreviewPath(GridStat target)
     {
+        if (target == null || grid == null || moving)
+            return;
         Debug.Log("PREVIEW: " + target.x + ", " + target.y);
         UpdateGridPosition();
 
@@ -86,9 +115,20 @@ public class HeroController : MonoBehaviour
 
             int cost = GetMovementCost(previous, tile);
 
+            if (pathMarkerPrefab == null)
+            {
+                previous = tile;
+                continue;
+            }
+
             GameObject p = Instantiate(pathMarkerPrefab, tile.transform.position, Quaternion.identity);
             pathMarkers.Add(p);
             PathMaker pm = p.GetComponent<PathMaker>();
+            if (pm == null)
+            {
+                previous = tile;
+                continue;
+            }
             
             bool isEnd = i == path.Count - 1;
 
@@ -178,9 +218,11 @@ public class HeroController : MonoBehaviour
 
     private int GetMovementCost(GridStat from, GridStat to)
     {
+        if (to == null)
+            return 0;
         int cost = to.movementCost;
 
-        bool diagonal = from.x != to.x && from.y != to.y;
+        bool diagonal = from != null && from.x != to.x && from.y != to.y;
         if (diagonal)
             cost = Mathf.CeilToInt(cost * 1.4f);
 
@@ -189,7 +231,7 @@ public class HeroController : MonoBehaviour
 
     private void MoveAlongPath()
     {
-        if (currentPath == null || pathIndex >= currentPath.Count)
+        if (grid == null || currentPath == null || pathIndex >= currentPath.Count)
         {
             moving = false;
             UpdateGridPosition();
@@ -197,6 +239,11 @@ public class HeroController : MonoBehaviour
         }
 
         GridStat targetTile = currentPath[pathIndex];
+        if (targetTile == null)
+        {
+            moving = false;
+            return;
+        }
         Vector3 target = targetTile.transform.position;
         transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
 
@@ -215,7 +262,11 @@ public class HeroController : MonoBehaviour
 
             MapObject mapObject = targetTile.GetComponentInChildren<MapObject>();
 
-            if (mapObject != null)
+            if (targetTile.castle != null)
+            {
+                targetTile.castle.Interact(this);
+            }
+            else if (mapObject != null)
             {
                 mapObject.Interact(this);
             }
@@ -226,6 +277,8 @@ public class HeroController : MonoBehaviour
 
     private void UpdateGridPosition()
     {
+        if (grid == null)
+            return;
         Vector2Int pos = grid.WorldToGrid(transform.position);
 
         gridX = pos.x;

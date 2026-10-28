@@ -58,12 +58,14 @@ public class CameraController : MonoBehaviour
 
     private void HandleZoom()
     {
-        if (Mouse.current == null)
+        if (Mouse.current == null || cam == null ||
+            HeroDetailsPanel.BlocksMapInput(Mouse.current.position.ReadValue()))
             return;
 
         float scroll = Mouse.current.scroll.ReadValue().y;
 
-        cam.orthographicSize -= scroll * zoomSpeed;
+        // Multiply the saved Inspector speed too, without changing the scene.
+        cam.orthographicSize -= scroll * zoomSpeed * 3f;
 
         cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minZoom, maxZoom);
     }

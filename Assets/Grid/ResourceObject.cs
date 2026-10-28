@@ -6,6 +6,8 @@ public class ResourceObject : MapObject
 
     public override void Interact(HeroController hero)
     {
+        if (hero == null || TeamManager.Instance == null)
+            return;
         Team team = TeamManager.Instance.GetTeam(hero.teamId);
 
         if (team == null)

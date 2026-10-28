@@ -22,6 +22,8 @@ public class MouseController : MonoBehaviour
             return;
 
         Vector2 mousePosition = Mouse.current.position.ReadValue();
+        if (HeroDetailsPanel.BlocksMapInput(mousePosition))
+            return;
 
         Vector3 worldPosition =
             mainCamera.ScreenToWorldPoint(mousePosition);
@@ -45,6 +47,8 @@ public class MouseController : MonoBehaviour
 
             if (hero != null)
             {
+                if (HeroSelectionManager.Instance == null)
+                    return;
                 Debug.Log("HERO SELECTED: " + hero.name);
 
                 HeroSelectionManager.Instance.SelectHero(hero);

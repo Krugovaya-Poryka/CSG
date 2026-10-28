@@ -32,8 +32,31 @@ public class GridBehavior : MonoBehaviour
     [Header("Generation")]
     public float noiseScale = 0.05f;
 
+#if UNITY_EDITOR
+    // Recover cleared Inspector references in Play Mode without editing the scene.
+    private void LoadDefaultPrefabs()
+    {
+        if (gridPrefab == null)
+            gridPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Grid/Atile.prefab");
+        if (heroPrefab == null)
+            heroPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Grid/Player.prefab");
+        if (resourcePrefab == null)
+            resourcePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Grid/gold.prefab");
+    }
+
+    private void Reset()
+    {
+        LoadDefaultPrefabs();
+    }
+#endif
+
     private void Awake()
     {
+#if UNITY_EDITOR
+        LoadDefaultPrefabs();
+#endif
+        HeroDetailsPanel.EnsureExists();
+        TeamManager.EnsureExists();
         Template template = new Template();
 
         rows = template.height;
@@ -194,6 +217,8 @@ public class GridBehavior : MonoBehaviour
 
         hero.grid = this;
         hero.teamId = teamId;
+        if (TeamManager.Instance != null)
+            TeamManager.Instance.RegisterHero(hero);
     }
     
     private void PlaceCastle(int startX, int startY, int teamId)
@@ -229,13 +254,23 @@ public class GridBehavior : MonoBehaviour
 
         GameObject castleObject = center.BuildCastle();
 
+        if (castleObject == null)
+            return;
+
         Castle castle = castleObject.GetComponent<Castle>();
 
         if (castle != null)
         {
             castle.teamId = teamId; 
             castle.gridPosition = entrance;
+            castle.entrance = GetTile(entrance.x, entrance.y);
+            if (castle.entrance != null)
+                castle.entrance.castle = castle;
+            if (TeamManager.Instance != null)
+                TeamManager.Instance.RegisterCastle(castle);
         }
+        else
+            Debug.LogError("Castle prefab has no Castle component!", castleObject);
     }
     
     
@@ -263,6 +298,8 @@ public class GridBehavior : MonoBehaviour
     
     private void CreateResources()
     {
+        if (resourcePrefab == null)
+            return;
         System.Random rng = new System.Random(seed + 777);
 
         for (int x = 0; x < columns; x++)
@@ -280,19 +317,29 @@ public class GridBehavior : MonoBehaviour
                 if (!tile.walkable)
                     continue;
 
+                if (tile.castle != null)
+                    continue;
+
                 if (tile.tileType == GridStat.TileType.Road)
                     continue;
 
                 GameObject resource = Instantiate(
                     resourcePrefab,
                     tile.transform.position,
-                    Quaternion.identity
+                    Quaternion.identity,
+                    tile.transform
                 );
 
                 ResourceObject obj =
                     resource.GetComponent<ResourceObject>();
 
-                obj.gridPosition = new Vector2Int(x, y);
+                if (obj != null)
+                    obj.gridPosition = new Vector2Int(x, y);
+                else
+                {
+                    Debug.LogWarning("Resource prefab has no ResourceObject!", resource);
+                    Destroy(resource);
+                }
             }
         }
     }
@@ -440,7 +487,7 @@ public class GridBehavior : MonoBehaviour
 
     public GridStat GetTile(int x, int y)
     {
-        if (x < 0 || x >= columns || y < 0 || y >= rows)
+        if (gridArray == null || x < 0 || x >= columns || y < 0 || y >= rows)
         {
             return null;
         }

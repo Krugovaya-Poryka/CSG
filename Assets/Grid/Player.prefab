@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 6792279806497096533}
   - component: {fileID: 7096392887808801314}
   - component: {fileID: 8522255997429570587}
+  - component: {fileID: 11400002}
+  - component: {fileID: 11400003}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -105,7 +107,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d8804ffe2cda96140a0ee89209f2806e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::GridMover
 --- !u!114 &7096392887808801314
 MonoBehaviour:
@@ -117,12 +119,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98e76c628acd3b4b79530937e10ac3a4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::HeroController
   grid: {fileID: 0}
-  pm: {fileID: 0}
   pathMarkerPrefab: {fileID: 8946038419303559817, guid: 8dc8fe509fde2323f87c4c40e96936dd, type: 3}
   teamId: 0
+  stats:
+    attack: 2
+    defense: 1
+    power: 1
+    knowledge: 1
+  inventory:
+    items: []
+    equippedItems: []
+  army: {fileID: 11400002}
   maxMovementPoints: 30
   movementPoints: 30
   moveSpeed: 4
@@ -165,3 +175,43 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!114 &11400002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2755617230138739114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cc1629f36f23754a824eb3609986bbf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HeroArmy
+  heroName: Christian
+  slots:
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+  - unitData: {fileID: 0}
+    count: 0
+--- !u!114 &11400003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2755617230138739114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea97f5aebbf04b638cbd07ad0784ba8f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HeroInventoryDemo

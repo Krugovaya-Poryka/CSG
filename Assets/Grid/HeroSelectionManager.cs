@@ -2,8 +2,10 @@ using UnityEngine;
 
 public class HeroSelectionManager : MonoBehaviour
 {
-    public GridStat selectedTarget;
     public static HeroSelectionManager Instance;
+
+    [Tooltip("Team whose movement is restored by EndTurn. The current map starts with team 0.")]
+    public int currentTeamId;
 
     public HeroController selectedHero;
 
@@ -12,6 +14,12 @@ public class HeroSelectionManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     public void ClickTile(GridStat target)
@@ -35,7 +43,7 @@ public class HeroSelectionManager : MonoBehaviour
         if (heroUI != null)
             heroUI.ShowHero(selectedHero);
 
-        Debug.Log("Selected hero: " + hero.name);
+        Debug.Log(hero != null ? "Selected hero: " + hero.name : "No hero selected");
     }
     
     
@@ -43,11 +51,15 @@ public class HeroSelectionManager : MonoBehaviour
     
     public void EndTurn()
     {
-        HeroController[] heroes = FindObjectsByType<HeroController>(FindObjectsSortMode.None);
+        Team team = TeamManager.Instance != null
+            ? TeamManager.Instance.GetTeam(currentTeamId) : null;
+        if (team == null || team.heroes == null)
+            return;
 
-        foreach (HeroController hero in heroes)
+        foreach (HeroController hero in team.heroes)
         {
-            hero.ResetMovement();
+            if (hero != null)
+                hero.ResetMovement();
         }
     }
 }

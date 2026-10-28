@@ -1,0 +1,105 @@
+@startuml
+skinparam classAttributeIconSize 0
+class Team {
+  +id : int
+  +heroes : List<HeroController>
+  +castles : List<Castle>
+}
+class TeamManager {
+  +teams : List<Team>
+  +RegisterHero(hero)
+  +UnregisterHero(hero)
+  +RegisterCastle(castle)
+  +UnregisterCastle(castle)
+}
+class HeroController {
+  +teamId : int
+  +stats : HeroStats
+  +inventory : HeroInventory
+  +army : HeroArmy
+  +Attack : int
+  +Defense : int
+  +ResetMovement()
+}
+class Castle {
+  +entrance : GridStat
+  +Interact(hero)
+}
+abstract class TeamOwnedObject {
+  +teamId : int
+}
+abstract class MapObject {
+  +gridPosition : Vector2Int
+  +Interact(hero)
+}
+class HeroStats {
+  +attack : int
+  +defense : int
+  +power : int
+  +knowledge : int
+}
+class HeroInventory {
+  +items : List<Item>
+  +equippedItems : List<Item>
+  +EquipItem(item) : bool
+  +UnequipItem(item) : bool
+  +GetEquippedItem(slot) : Item
+  +AttackBonus : int
+  +DefenseBonus : int
+  +AddItem(item)
+  +RemoveItem(item) : bool
+}
+class Item {
+  +itemName : string
+  +slot : EquipmentSlot
+  +attackBonus : int
+  +defenseBonus : int
+}
+enum EquipmentSlot {
+  None
+  Weapon
+  Shield
+  Helmet
+  Armor
+}
+Item --> EquipmentSlot
+class HeroArmy <<existing external component>>
+class GridStat {
+  +castle : Castle
+}
+class HeroSelectionManager {
+  +currentTeamId : int
+  +EndTurn()
+}
+class HeroInventoryDemo {
+  +AddDemoItemsOnce()
+  +RemoveDemoSword()
+}
+Team "0..1" o-- "0..*" HeroController : aggregation / heroes
+Team "0..1" o-- "0..*" Castle : aggregation / castles
+HeroController "1" *-- "1" HeroStats : composition / stats
+HeroController "1" *-- "1" HeroInventory : composition / inventory
+HeroInventory "1" *-- "0..*" Item : composition / owned items
+HeroController --> "0..1" HeroArmy : reads existing component
+TeamManager --> Team : registration / transfer
+MapObject <|-- TeamOwnedObject
+TeamOwnedObject <|-- Castle
+GridStat --> "0..1" Castle : entrance link
+Castle --> GridStat : entrance
+HeroSelectionManager ..> Team : EndTurn resets currentTeam.heroes
+HeroInventoryDemo ..> HeroController : creates private demo items once
+note right of HeroInventory
+  Items are ordinary inline serializable data.
+  Demo creates new items for each hero;
+  no shared item assets or external owner.
+  items = backpack, equippedItems = equipment.
+  Equip/Unequip transfer items between collections.
+  RemoveItem removes the owned reference;
+  managed memory is reclaimed by GC.
+end note
+note bottom of Team
+  Aggregation: removing a reference does not
+  destroy the hero or castle GameObject.
+  A registered object belongs to one team.
+end note
+@enduml

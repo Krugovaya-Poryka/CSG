@@ -5,6 +5,7 @@ using UnityEngine;
 /// <summary>
 /// ШІ-юніт: приймає автономні рішення в покроковому бою на гексовій сітці.
 /// ЛР1: власні дані (ім'я, складність), Initialize, OnDestroy, «чиста» логіка UC-22/UC-23.
+/// ЛР2: належить AIPlayer (композиція); пороги відступу беруться з AIProfile.
 /// </summary>
 public class AIUnit : MonoBehaviour
 {
@@ -50,14 +51,8 @@ public class AIUnit : MonoBehaviour
     // ---------- UC-23: відступити (extend від UC-22, якщо ворог сильніший) ----------
     public bool ShouldRetreat(int myPower, int enemyPower)
     {
-        float threshold;
-        switch (Difficulty)
-        {
-            case AIManager.AIDifficulty.Easy: threshold = 0.25f; break;
-            case AIManager.AIDifficulty.Hard: threshold = 0.75f; break;
-            default: threshold = 0.5f; break;
-        }
-        return EvaluateForceRatio(myPower, enemyPower) < threshold;
+        // ЛР2: пороги винесено в AIProfile (єдине місце зберігання)
+        return EvaluateForceRatio(myPower, enemyPower) < AIProfile.GetRetreatThreshold(Difficulty);
     }
 
     /// <summary>

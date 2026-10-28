@@ -4,8 +4,11 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// ЛР1: Менеджер ШІ. Патерни: Одинак (Singleton) + Фасад (Facade).
-/// Реалізує прецеденти: UC-11, UC-24, UC-25, UC-3/UC-4 (історія боїв), UC-5, UC-6.
+/// Менеджер ШІ. Патерни: Одинак (Singleton) + Фасад (Facade).
+/// ЛР1: UC-11, UC-24, UC-25, UC-3/UC-4 (історія боїв), UC-5, UC-6 (API збережено).
+/// ЛР2: композиція AIManager *-- AIPlayer *-- AIUnit, пресети профілів AIManager *-- AIProfile.
+/// Юніти тепер належать гравцям; методи ЛР1 працюють над юнітами всіх гравців,
+/// а CreateAI створює юніт у гравця за замовчуванням ("Default").
 /// </summary>
 public class AIManager : MonoBehaviour
 {
@@ -37,7 +40,13 @@ public class AIManager : MonoBehaviour
     }
 
     // ---------- Поля ----------
-    private readonly Dictionary<string, AIUnit> activeAIUnits = new Dictionary<string, AIUnit>();
+    // Dictionary: унікальні імена гравців і швидкий пошук за ім'ям
+    private readonly Dictionary<string, AIPlayer> players = new Dictionary<string, AIPlayer>();
+    // Dictionary з ключем-enum: один спільний профіль на кожну складність
+    private readonly Dictionary<AIDifficulty, AIProfile> profiles = new Dictionary<AIDifficulty, AIProfile>();
+
+    private const string DefaultPlayerName = "Default";
+
     private AIDifficulty currentDifficulty = AIDifficulty.Normal;
     private int totalCreated = 0;
 
@@ -67,7 +76,99 @@ public class AIManager : MonoBehaviour
 
     public AIDifficulty GetDifficulty() => currentDifficulty;
 
-    // ---------- UC-24: створення / знищення ----------
+    // ---------- ЛР2: профілі (менеджер їх створює й володіє ними) ----------
+    public AIProfile GetProfile(AIDifficulty difficulty)
+    {
+        if (!profiles.TryGetValue(difficulty, out AIProfile profile))
+        {
+            profile = new AIProfile(difficulty);
+            profiles[difficulty] = profile;
+        }
+        return profile;
+    }
+
+    // ---------- ЛР2: гравці (композиція) ----------
+    public AIPlayer CreatePlayer(string playerName, AIDifficulty difficulty)
+    {
+        if (string.IsNullOrEmpty(playerName))
+        {
+            Debug.LogError("[-] Player name must not be empty!");
+            return null;
+        }
+
+        if (players.ContainsKey(playerName))
+        {
+            Debug.LogError($"[-] Player '{playerName}' already exists!");
+            return null;
+        }
+
+        AIPlayer player = new AIPlayer(playerName, GetProfile(difficulty));
+        players[playerName] = player;
+
+        Debug.Log($"[+] Player '{playerName}' created ({difficulty})");
+        return player;
+    }
+
+    public bool DestroyPlayer(string playerName)
+    {
+        if (!players.TryGetValue(playerName, out AIPlayer player))
+        {
+            Debug.LogWarning($"[!] Player '{playerName}' not found!");
+            return false;
+        }
+
+        player.DestroyAll();          // ціле знищує свої частини
+        players.Remove(playerName);
+        return true;
+    }
+
+    public AIPlayer GetPlayer(string playerName)
+    {
+        if (players.TryGetValue(playerName, out AIPlayer player)) return player;
+
+        Debug.LogWarning($"[!] Player '{playerName}' not found!");
+        return null;
+    }
+
+    public int GetPlayerCount() => players.Count;
+
+    public List<AIPlayer> GetAllPlayers() => new List<AIPlayer>(players.Values);
+
+    private AIPlayer GetOrCreateDefaultPlayer()
+    {
+        if (!players.TryGetValue(DefaultPlayerName, out AIPlayer player))
+        {
+            player = CreatePlayer(DefaultPlayerName, AIDifficulty.Normal);
+        }
+        return player;
+    }
+
+    // ---------- Допоміжні: юніти всіх гравців ----------
+    private IEnumerable<AIUnit> AllUnits()
+    {
+        return players.Values.SelectMany(p => p.GetUnits());
+    }
+
+    private AIUnit FindUnit(string unitName)
+    {
+        foreach (AIPlayer p in players.Values)
+        {
+            AIUnit unit = p.GetUnit(unitName);
+            if (unit != null) return unit;
+        }
+        return null;
+    }
+
+    private AIPlayer FindOwner(string unitName)
+    {
+        foreach (AIPlayer p in players.Values)
+        {
+            if (p.GetUnit(unitName) != null) return p;
+        }
+        return null;
+    }
+
+    // ---------- UC-24: створення / знищення (API ЛР1) ----------
     public AIUnit CreateAI(string unitName, Vector3 startPosition)
     {
         if (string.IsNullOrEmpty(unitName))
@@ -76,42 +177,34 @@ public class AIManager : MonoBehaviour
             return null;
         }
 
-        if (activeAIUnits.ContainsKey(unitName))
+        if (FindUnit(unitName) != null)
         {
             Debug.LogError($"[-] AI with name '{unitName}' already exists!");
             return null;
         }
 
-        GameObject aiGameObject = new GameObject($"AI_{unitName}");
-        aiGameObject.transform.position = startPosition;
-
-        AIUnit newAI = aiGameObject.AddComponent<AIUnit>();
-        newAI.Initialize(unitName, currentDifficulty);
-
-        activeAIUnits[unitName] = newAI;
-        totalCreated++;
-
-        Debug.Log($"[+] New AI unit created: '{unitName}' ({currentDifficulty}) at {startPosition}");
+        AIUnit newAI = GetOrCreateDefaultPlayer().CreateUnit(unitName, startPosition, currentDifficulty);
+        if (newAI != null) totalCreated++;
         return newAI;
     }
 
     public void DestroyAI(string unitName)
     {
-        if (!activeAIUnits.TryGetValue(unitName, out AIUnit aiUnit))
+        AIPlayer owner = FindOwner(unitName);
+        if (owner == null)
         {
             Debug.LogWarning($"[!] AI '{unitName}' not found!");
             return;
         }
 
-        activeAIUnits.Remove(unitName);
-        Destroy(aiUnit.gameObject); // реально знищується наприкінці кадру
-        Debug.Log($"[-] AI unit '{unitName}' destroyed");
+        owner.RemoveUnit(unitName);   // реально знищується наприкінці кадру
     }
 
     // ---------- UC-5: пошук ----------
     public AIUnit GetAI(string unitName)
     {
-        if (activeAIUnits.TryGetValue(unitName, out AIUnit unit)) return unit;
+        AIUnit unit = FindUnit(unitName);
+        if (unit != null) return unit;
 
         Debug.LogWarning($"[!] AI '{unitName}' not found!");
         return null;
@@ -119,24 +212,25 @@ public class AIManager : MonoBehaviour
 
     public List<AIUnit> FindAIByDifficulty(AIDifficulty difficulty)
     {
-        return activeAIUnits.Values.Where(u => u.Difficulty == difficulty).ToList();
+        return AllUnits().Where(u => u.Difficulty == difficulty).ToList();
     }
 
-    public int GetActiveAICount() => activeAIUnits.Count;
+    public int GetActiveAICount() => players.Values.Sum(p => p.UnitCount);
 
-    // Повертаємо копію, щоб зовнішній код не міг змінити внутрішню колекцію
-    public List<AIUnit> GetAllActiveAI() => new List<AIUnit>(activeAIUnits.Values);
+    // Повертаємо копію, щоб зовнішній код не міг змінити внутрішні колекції
+    public List<AIUnit> GetAllActiveAI() => AllUnits().ToList();
 
     // ---------- UC-6: сортування ----------
     public List<AIUnit> GetAISortedByName()
     {
-        return activeAIUnits.Values.OrderBy(u => u.UnitName).ToList();
+        return AllUnits().OrderBy(u => u.UnitName).ToList();
     }
 
     // ---------- UC-11: обчислити хід ШІ (фасад над AIUnit) ----------
     public bool ComputeTurn(string unitName, List<BattleUnit> allUnits, System.Action onTurnComplete)
     {
-        if (!activeAIUnits.TryGetValue(unitName, out AIUnit unit))
+        AIUnit unit = FindUnit(unitName);
+        if (unit == null)
         {
             Debug.LogWarning($"[!] ComputeTurn: AI '{unitName}' not found!");
             return false;
@@ -175,6 +269,6 @@ public class AIManager : MonoBehaviour
 
     public void LogAIStatus()
     {
-        Debug.Log($"[STATUS] AIManager: {GetActiveAICount()} active AI, created total: {totalCreated}");
+        Debug.Log($"[STATUS] AIManager: {players.Count} players, {GetActiveAICount()} active AI, created via manager: {totalCreated}");
     }
 }

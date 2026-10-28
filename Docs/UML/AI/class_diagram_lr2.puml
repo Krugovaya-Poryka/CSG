@@ -1,0 +1,80 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+enum AIDifficulty {
+  Easy
+  Normal
+  Hard
+}
+
+class AIManager <<Singleton, Facade>> {
+  -instance : AIManager {static}
+  -players : Dictionary<string, AIPlayer>
+  -profiles : Dictionary<AIDifficulty, AIProfile>
+  -currentDifficulty : AIDifficulty
+  -totalCreated : int
+  +Instance : AIManager {static}
+  +CreatePlayer(name, difficulty) : AIPlayer
+  +DestroyPlayer(name) : bool
+  +GetPlayer(name) : AIPlayer
+  +GetProfile(difficulty) : AIProfile
+  +CreateAI(name, position) : AIUnit
+  +DestroyAI(name)
+  +GetAI(name) : AIUnit
+  +FindAIByDifficulty(d) : List<AIUnit>
+  +GetAISortedByName() : List<AIUnit>
+  +ComputeTurn(name, units, callback) : bool
+  +SaveBattleResult(result, aiName)
+  +LoadBattleHistory() : string
+}
+
+class AIPlayer {
+  +Name : string
+  +Profile : AIProfile
+  -units : List<AIUnit>
+  -history : List<AIDecisionRecord>
+  +CreateUnit(name, position) : AIUnit
+  +RemoveUnit(name) : bool
+  +GetUnit(name) : AIUnit
+  +GetUnits() : List<AIUnit>
+  +RecordDecision(turn, unit, action)
+  +GetHistory() : List<AIDecisionRecord>
+  +DestroyAll()
+}
+
+class AIProfile <<immutable>> {
+  +Difficulty : AIDifficulty
+  +RetreatThreshold : float
+  +GetRetreatThreshold(d) : float {static}
+}
+
+class AIDecisionRecord <<immutable>> {
+  +Turn : int
+  +UnitName : string
+  +Action : string
+  +Timestamp : string
+  +Describe() : string
+}
+
+class AIUnit <<MonoBehaviour>> {
+  +UnitName : string
+  +Difficulty : AIDifficulty
+  -myUnit : BattleUnit
+  +Initialize(name, difficulty)
+  +IsAlive() : bool
+  +EvaluateForceRatio(my, enemy) : float
+  +ShouldRetreat(my, enemy) : bool
+  +MakeAutonomousDecision(units, callback)
+}
+
+class BattleUnit <<роль «Юніти»>>
+
+AIManager +-- AIDifficulty
+AIManager "1" *-- "0..*" AIPlayer : створює\nі знищує
+AIManager "1" *-- "0..3" AIProfile : пресети\nпо складності
+AIPlayer "1" *-- "0..*" AIUnit : композиція
+AIPlayer "1" *-- "0..*" AIDecisionRecord : композиція
+AIPlayer "0..*" o-- "1" AIProfile : агрегація\n(спільний)
+AIUnit "0..1" o-- "0..1" BattleUnit : агрегація\n(чужий об'єкт)
+AIUnit ..> AIProfile : <<uses>>\nGetRetreatThreshold
+@enduml

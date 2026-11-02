@@ -6,12 +6,14 @@ using UnityEngine;
 ///   КОМПОЗИЦІЯ: AIPlayer *-- AIUnit (сам створює й знищує юнітів)
 ///   КОМПОЗИЦІЯ: AIPlayer *-- AIDecisionRecord (журнал рішень)
 ///   АГРЕГАЦІЯ:  AIPlayer o-- AIProfile (профіль отримує ззовні, ділиться з іншими гравцями)
+///   АГРЕГАЦІЯ:  AIPlayer o-- AIStrategy (ЛР3: стратегію отримує ззовні, її ділять юніти гравця)
 /// Звичайний C#-клас: має конструктор, не прив'язаний до GameObject.
 /// </summary>
 public class AIPlayer
 {
     public string Name { get; }
     public AIProfile Profile { get; }   // агрегація: чужий (спільний) об'єкт
+    public AIStrategy Strategy { get; } // ЛР3: поліморфна поведінка гравця
 
     // Колекції-частини. List: важливий порядок, кількість мала, потрібен обхід.
     private readonly List<AIUnit> units = new List<AIUnit>();
@@ -22,10 +24,16 @@ public class AIPlayer
     public int HistoryCount => history.Count;
     public int TotalCreated => totalCreated;
 
-    public AIPlayer(string name, AIProfile profile)
+    public AIPlayer(string name, AIProfile profile) : this(name, profile, null)
+    {
+    }
+
+    // strategy == null: типова стратегія ClosestEnemyStrategy (поведінка ЛР1/ЛР2)
+    public AIPlayer(string name, AIProfile profile, AIStrategy strategy)
     {
         Name = name;
         Profile = profile ?? throw new System.ArgumentNullException(nameof(profile));
+        Strategy = strategy ?? new ClosestEnemyStrategy();
     }
 
     // ---------- Юніти (композиція) ----------
@@ -53,6 +61,7 @@ public class AIPlayer
 
         AIUnit unit = go.AddComponent<AIUnit>();
         unit.Initialize(unitName, difficulty);
+        unit.SetStrategy(Strategy);   // ЛР3: юніт діє за стратегією свого гравця
 
         units.Add(unit);
         totalCreated++;
@@ -89,6 +98,12 @@ public class AIPlayer
     public void RecordDecision(int turn, string unitName, string action)
     {
         history.Add(new AIDecisionRecord(turn, unitName, action));
+    }
+
+    // ЛР3: відновлення запису зі збереженим часом
+    public void RecordDecision(int turn, string unitName, string action, string timestamp)
+    {
+        history.Add(new AIDecisionRecord(turn, unitName, action, timestamp));
     }
 
     public List<AIDecisionRecord> GetHistory()

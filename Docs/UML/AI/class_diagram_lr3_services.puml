@@ -1,0 +1,80 @@
+@startuml
+skinparam classAttributeIconSize 0
+title ЛР3: пошук, сортування, збереження та відновлення
+
+class AIManager <<Singleton, Facade>> {
+  +FindAI(filter : AIUnitFilter) : List<AIUnit>
+  +GetAISorted(sorter : AIUnitSorter) : List<AIUnit>
+  +SaveState(storage : AIStorage, path) : bool
+  +LoadState(storage : AIStorage, path) : bool
+  +CreateSnapshot() : AISaveData
+  +RestoreSnapshot(data)
+}
+
+abstract class AIUnitFilter {
+  {abstract} +Description : string
+  {abstract} +Matches(unit) : bool
+}
+class DifficultyFilter
+class NameContainsFilter
+class StrategyFilter
+
+interface "IComparer<AIUnit>" as IComparer {
+  +Compare(x, y) : int
+}
+abstract class AIUnitSorter {
+  {abstract} +Description : string
+  {abstract} +Compare(x, y) : int
+}
+class ByNameSorter
+class ByDifficultySorter
+class ByStrategySorter
+
+abstract class AIStorage {
+  {abstract} +Name : string
+  {abstract} +FileExtension : string
+  {abstract} #Serialize(data) : string
+  {abstract} #Deserialize(text) : AISaveData
+  +Save(data, path)
+  +Load(path) : AISaveData
+}
+class JsonAIStorage
+class TextAIStorage
+
+class AISaveData {
+  +players : List<PlayerSaveData>
+}
+class PlayerSaveData {
+  +name, difficulty, strategy
+  +units : List<UnitSaveData>
+  +history : List<RecordSaveData>
+}
+class UnitSaveData {
+  +name, x, y, z, difficulty
+}
+class RecordSaveData {
+  +turn, unitName, action, timestamp
+}
+
+AIManager ..> AIUnitFilter : <<uses>>
+AIManager ..> AIUnitSorter : <<uses>>
+AIManager ..> AIStorage : <<uses>>
+AIManager ..> AISaveData : створює/читає
+
+AIUnitFilter <|-- DifficultyFilter
+AIUnitFilter <|-- NameContainsFilter
+AIUnitFilter <|-- StrategyFilter
+
+IComparer <|.. AIUnitSorter
+AIUnitSorter <|-- ByNameSorter
+AIUnitSorter <|-- ByDifficultySorter
+AIUnitSorter <|-- ByStrategySorter
+
+AIStorage <|-- JsonAIStorage
+AIStorage <|-- TextAIStorage
+AIStorage ..> AISaveData
+
+AISaveData "1" *-- "0..*" PlayerSaveData
+PlayerSaveData "1" *-- "0..*" UnitSaveData
+PlayerSaveData "1" *-- "0..*" RecordSaveData
+@enduml

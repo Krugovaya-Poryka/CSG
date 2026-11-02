@@ -5,21 +5,28 @@
 /// </summary>
 public class AIDecisionRecord
 {
-	public int Turn { get; }
-	public string UnitName { get; }
-	public string Action { get; }
-	public string Timestamp { get; }
+    public int Turn { get; }
+    public string UnitName { get; }
+    public string Action { get; }
+    public string Timestamp { get; }
 
-	public AIDecisionRecord(int turn, string unitName, string action)
-	{
-		Turn = turn;
-		UnitName = unitName;
-		Action = action;
-		Timestamp = System.DateTime.Now.ToString("HH:mm:ss");
-	}
+    // Новий запис: час ставиться автоматично
+    public AIDecisionRecord(int turn, string unitName, string action)
+        : this(turn, unitName, action, System.DateTime.Now.ToString("HH:mm:ss"))
+    {
+    }
 
-	public string Describe()
-	{
-		return $"[{Timestamp}] T{Turn} {UnitName}: {Action}";
-	}
+    // ЛР3: відновлення запису зі збереження (час береться зі збереженого)
+    public AIDecisionRecord(int turn, string unitName, string action, string timestamp)
+    {
+        Turn = turn;
+        UnitName = unitName;
+        Action = action;
+        Timestamp = timestamp;
+    }
+
+    public string Describe()
+    {
+        return $"[{Timestamp}] T{Turn} {UnitName}: {Action}";
+    }
 }

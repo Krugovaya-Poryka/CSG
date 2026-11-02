@@ -1,0 +1,80 @@
+@startuml
+skinparam classAttributeIconSize 0
+title ЛР3: ієрархія стратегій ШІ та її місце в моделі ЛР2
+
+class AIManager <<Singleton, Facade>> {
+  -players : Dictionary<string, AIPlayer>
+  -profiles : Dictionary<AIDifficulty, AIProfile>
+  +CreatePlayer(name, difficulty, strategy) : AIPlayer
+  +DestroyPlayer(name) : bool
+}
+
+class AIPlayer {
+  +Name : string
+  +Profile : AIProfile
+  +Strategy : AIStrategy
+  -units : List<AIUnit>
+  -history : List<AIDecisionRecord>
+  +CreateUnit(name, position) : AIUnit
+  +DestroyAll()
+}
+
+class AIUnit <<MonoBehaviour>> {
+  +UnitName : string
+  +Difficulty : AIDifficulty
+  +Strategy : AIStrategy
+  +SetStrategy(strategy)
+  +ChooseTarget(candidates) : TargetCandidate
+  +ShouldRetreat(my, enemy) : bool
+  +MakeAutonomousDecision(units, callback)
+}
+
+class AIProfile <<immutable>> {
+  +Difficulty : AIDifficulty
+  +RetreatThreshold : float
+}
+
+class AIDecisionRecord <<immutable>>
+
+class TargetCandidate <<data>> {
+  +Name : string
+  +Distance : int
+  +Power : int
+  +IsRanged : bool
+}
+
+abstract class AIStrategy {
+  {abstract} +Name : string
+  {abstract} +ChooseTarget(candidates) : TargetCandidate
+  +ShouldRetreat(ratio, baseThreshold) : bool <<virtual>>
+  {static} +FromName(name) : AIStrategy
+}
+
+class ClosestEnemyStrategy {
+  +ChooseTarget() : найближчий <<override>>
+}
+class AggressiveStrategy {
+  +ChooseTarget() : найслабший <<override>>
+  +ShouldRetreat() : поріг x0.5 <<override>>
+}
+class DefensiveStrategy {
+  +ShouldRetreat() : поріг x1.5 <<override>>
+}
+class FocusFireStrategy {
+  +ChooseTarget() : стрільці першими <<override>>
+}
+
+AIManager "1" *-- "0..*" AIPlayer
+AIManager "1" *-- "0..3" AIProfile
+AIPlayer "1" *-- "0..*" AIUnit
+AIPlayer "1" *-- "0..*" AIDecisionRecord
+AIPlayer "0..*" o-- "1" AIProfile
+AIPlayer "0..*" o-- "1" AIStrategy : агрегація\n(нове в ЛР3)
+AIUnit "0..*" o-- "1" AIStrategy : використовує
+AIStrategy ..> TargetCandidate : <<uses>>
+
+AIStrategy <|-- ClosestEnemyStrategy
+AIStrategy <|-- AggressiveStrategy
+ClosestEnemyStrategy <|-- DefensiveStrategy
+ClosestEnemyStrategy <|-- FocusFireStrategy
+@enduml

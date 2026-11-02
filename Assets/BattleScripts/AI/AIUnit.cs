@@ -6,12 +6,16 @@ using UnityEngine;
 /// ШІ-юніт: приймає автономні рішення в покроковому бою на гексовій сітці.
 /// ЛР1: власні дані (ім'я, складність), Initialize, OnDestroy, «чиста» логіка UC-22/UC-23.
 /// ЛР2: належить AIPlayer (композиція); пороги відступу беруться з AIProfile.
+/// ЛР3: вибір цілі та готовність відступати делегуються стратегії (поліморфізм).
 /// </summary>
 public class AIUnit : MonoBehaviour
 {
     // ---------- ЛР1: власні дані об'єкта ----------
     public string UnitName { get; private set; }
     public AIManager.AIDifficulty Difficulty { get; private set; }
+
+    // ЛР3: поточна стратегія (агрегація: належить не юніту, а його гравцеві)
+    public AIStrategy Strategy { get; private set; } = new ClosestEnemyStrategy();
 
     // ---------- Залежності від колег (юніти та карта) ----------
     private BattleUnit myUnit;
@@ -28,6 +32,17 @@ public class AIUnit : MonoBehaviour
     {
         UnitName = unitName;
         Difficulty = difficulty;
+    }
+
+    public void SetStrategy(AIStrategy strategy)
+    {
+        Strategy = strategy ?? new ClosestEnemyStrategy();
+    }
+
+    // ЛР3: ПОЛІМОРФНИЙ виклик: результат залежить від того, який нащадок AIStrategy стоїть у Strategy
+    public TargetCandidate ChooseTarget(List<TargetCandidate> candidates)
+    {
+        return Strategy.ChooseTarget(candidates);
     }
 
     // Знищення: аналог деструктора
@@ -51,8 +66,9 @@ public class AIUnit : MonoBehaviour
     // ---------- UC-23: відступити (extend від UC-22, якщо ворог сильніший) ----------
     public bool ShouldRetreat(int myPower, int enemyPower)
     {
-        // ЛР2: пороги винесено в AIProfile (єдине місце зберігання)
-        return EvaluateForceRatio(myPower, enemyPower) < AIProfile.GetRetreatThreshold(Difficulty);
+        // ЛР2: базовий поріг береться з AIProfile; ЛР3: рішення ухвалює стратегія (поліморфізм)
+        float ratio = EvaluateForceRatio(myPower, enemyPower);
+        return Strategy.ShouldRetreat(ratio, AIProfile.GetRetreatThreshold(Difficulty));
     }
 
     /// <summary>
@@ -84,8 +100,9 @@ public class AIUnit : MonoBehaviour
             return;
         }
 
-        // 2. Вибір найближчого ворога (за відстанню на гексовій сітці)
-        BattleUnit target = GetClosestEnemy(enemies);
+        // 2. ЛР3: вибір цілі делегується стратегії (раніше завжди найближчий ворог)
+        TargetCandidate chosen = Strategy.ChooseTarget(BuildCandidates(enemies));
+        BattleUnit target = chosen != null ? chosen.Unit : null;
         if (target == null)
         {
             onTurnComplete?.Invoke();
@@ -165,21 +182,19 @@ public class AIUnit : MonoBehaviour
         }
     }
 
-    private BattleUnit GetClosestEnemy(List<BattleUnit> enemies)
+    // ЛР3: перетворює ворогів на прості дані для стратегії
+    // (потужність = розмір стеку, відстань = у гексах)
+    private List<TargetCandidate> BuildCandidates(List<BattleUnit> enemies)
     {
-        BattleUnit closest = null;
-        int minDist = int.MaxValue;
+        List<TargetCandidate> list = new List<TargetCandidate>();
 
         foreach (var enemy in enemies)
         {
             int dist = HexUtils.GetHexDistance(myUnit.hexCoords, enemy.hexCoords);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                closest = enemy;
-            }
+            bool ranged = enemy.data != null && enemy.data.isRanged;
+            list.Add(new TargetCandidate(enemy, enemy.gameObject.name, dist, enemy.stackSize, ranged));
         }
-        return closest;
+        return list;
     }
 
     private HashSet<Vector2Int> GetBlockedHexes(List<BattleUnit> allUnits)

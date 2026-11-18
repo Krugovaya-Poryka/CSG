@@ -2,8 +2,34 @@ using UnityEngine;
 
 public class ResourceObject : MapObject
 {
-    public int amount = 1000;
+    public ResourceType resourceType = ResourceType.Gold;
+    [Min(1)] public int amount = 1000;
     public bool IsCollected { get; private set; }
+
+    private void Awake()
+    {
+        UpdateAppearance();
+    }
+
+    public void Configure(ResourceType type, int quantity)
+    {
+        if (IsCollected) return;
+        resourceType = type;
+        amount = Mathf.Max(1, quantity);
+        UpdateAppearance();
+    }
+
+    private void UpdateAppearance()
+    {
+        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+        Sprite sprite = ResourceCatalog.GetSprite(resourceType);
+        if (renderer != null && sprite != null)
+        {
+            renderer.sprite = sprite;
+            renderer.sortingOrder = 3;
+        }
+        gameObject.name = ResourceCatalog.GetName(resourceType);
+    }
 
     public override void Interact(HeroController hero)
     {
@@ -17,10 +43,11 @@ public class ResourceObject : MapObject
         if (team == null)
             return;
 
+        if (!team.AddResource(resourceType, amount)) return;
         IsCollected = true;
-        team.gold += amount;
 
-        Debug.Log("ResourceObject.Interact: Collected gold: " + amount, this);
+        Debug.Log($"ResourceObject.Interact: +{amount} {ResourceCatalog.GetName(resourceType)}", this);
+        StrategyHUD.NotifyPickup(hero.teamId, resourceType, amount);
 
         Destroy(gameObject);
     }

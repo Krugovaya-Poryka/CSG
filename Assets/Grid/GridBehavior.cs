@@ -56,6 +56,7 @@ public class GridBehavior : MonoBehaviour
         LoadDefaultPrefabs();
 #endif
         HeroDetailsPanel.EnsureExists();
+        StrategyHUD.EnsureExists();
         TeamManager.EnsureExists();
         Template template = new Template();
 
@@ -73,6 +74,18 @@ public class GridBehavior : MonoBehaviour
         {
             Debug.LogError("No grid prefab found!");
         }
+    }
+
+    private void OnEnable()
+    {
+        // Unity does not serialize multidimensional arrays during an Editor script reload.
+        // Rebind the live tiles instead of regenerating the map and its objects.
+        if (!Application.isPlaying || gridArray != null || columns <= 0 || rows <= 0)
+            return;
+        gridArray = new GameObject[columns, rows];
+        foreach (GridStat tile in GetComponentsInChildren<GridStat>(true))
+            if (tile.grid == this && tile.x >= 0 && tile.x < columns && tile.y >= 0 && tile.y < rows)
+                gridArray[tile.x, tile.y] = tile.gameObject;
     }
 
     private void GenerateGrid()
@@ -306,7 +319,7 @@ public class GridBehavior : MonoBehaviour
         {
             for (int y = 0; y < rows; y++)
             {
-                if (rng.NextDouble() > 0.01)
+                if (rng.NextDouble() > 0.025)
                     continue;
 
                 GridStat tile = GetTile(x, y);
@@ -334,7 +347,11 @@ public class GridBehavior : MonoBehaviour
                     resource.GetComponent<ResourceObject>();
 
                 if (obj != null)
+                {
                     obj.gridPosition = new Vector2Int(x, y);
+                    ResourceType type = (ResourceType)rng.Next(ResourceCatalog.Count);
+                    obj.Configure(type, ResourceCatalog.GetPickupAmount(type, rng));
+                }
                 else
                 {
                     Debug.LogWarning("Resource prefab has no ResourceObject!", resource);

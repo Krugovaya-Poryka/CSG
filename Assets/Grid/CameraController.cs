@@ -59,7 +59,7 @@ public class CameraController : MonoBehaviour
     private void HandleZoom()
     {
         if (Mouse.current == null || cam == null ||
-            HeroDetailsPanel.BlocksMapInput(Mouse.current.position.ReadValue()))
+            (HeroDetailsPanel.BlocksMapInput(Mouse.current.position.ReadValue()) || StrategyHUD.BlocksMapInput(Mouse.current.position.ReadValue())))
             return;
 
         float scroll = Mouse.current.scroll.ReadValue().y;

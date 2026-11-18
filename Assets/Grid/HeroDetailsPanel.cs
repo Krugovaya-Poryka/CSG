@@ -95,6 +95,7 @@ public class HeroDetailsPanel : MonoBehaviour
                 GUILayout.Label("Defense: " + hero.Defense + " (equipment +" + (hero.inventory?.DefenseBonus ?? 0) + ")");
                 GUILayout.Label("Power: " + hero.stats.power);
                 GUILayout.Label("Knowledge: " + hero.stats.knowledge);
+                GUILayout.Label("Mana: " + Mathf.Clamp(hero.stats.mana, 0, hero.stats.MaxMana) + " / " + hero.stats.MaxMana);
             }
 
             GUILayout.Space(10);

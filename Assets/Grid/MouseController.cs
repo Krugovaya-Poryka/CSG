@@ -22,7 +22,7 @@ public class MouseController : MonoBehaviour
             return;
 
         Vector2 mousePosition = Mouse.current.position.ReadValue();
-        if (HeroDetailsPanel.BlocksMapInput(mousePosition))
+        if ((HeroDetailsPanel.BlocksMapInput(mousePosition) || StrategyHUD.BlocksMapInput(mousePosition)))
             return;
 
         Vector3 worldPosition =

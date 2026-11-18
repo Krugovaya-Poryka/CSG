@@ -15,6 +15,12 @@ public class TeamManager : MonoBehaviour
             teams = new List<Team>();
     }
 
+    private void OnEnable()
+    {
+        // Awake is not repeated when Unity reloads scripts during Play Mode.
+        Instance = this;
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
@@ -85,5 +91,25 @@ public class TeamManager : MonoBehaviour
         foreach (Team team in teams)
             if (team != null && team.castles != null)
                 team.castles.RemoveAll(member => member == castle);
+    }
+
+    public void RegisterMine(Mine mine)
+    {
+        if (mine == null)
+            return;
+        UnregisterMine(mine);
+        Team team = GetOrCreateTeam(mine.teamId);
+        if (team.mines == null)
+            team.mines = new List<Mine>();
+        team.mines.Add(mine);
+    }
+
+    public void UnregisterMine(Mine mine)
+    {
+        if (teams == null || mine == null)
+            return;
+        foreach (Team team in teams)
+            if (team != null && team.mines != null)
+                team.mines.RemoveAll(member => member == mine);
     }
 }

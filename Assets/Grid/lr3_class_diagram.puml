@@ -1,0 +1,106 @@
+@startuml
+title LR3 — Inheritance and polymorphic map interactions
+skinparam classAttributeIconSize 0
+
+abstract class MapObject {
+  +gridPosition : Vector2Int
+  {abstract} +Interact(hero : HeroController) : void
+}
+abstract class TeamOwnedObject {
+  +teamId : int
+}
+class ResourceObject {
+  +amount : int
+  +IsCollected : bool {readOnly}
+  +Interact(hero : HeroController) : void <<override>>
+}
+class NeutralArmy {
+  +Interact(hero : HeroController) : void <<override>>
+}
+class Castle {
+  +entrance : GridStat
+  +Interact(hero : HeroController) : void <<override>>
+}
+class Mine {
+  +Interact(hero : HeroController) : void <<override>>
+}
+class HeroController {
+  +teamId : int
+  +stats : HeroStats
+  +inventory : HeroInventory
+  +army : HeroArmy
+  -MoveAlongPath() : void
+}
+class Team {
+  +id : int
+  +heroes : List<HeroController>
+  +castles : List<Castle>
+  +mines : List<Mine>
+  +gold : int
+}
+class TeamManager {
+  {static} +Instance : TeamManager
+  {static} +EnsureExists() : void
+  +teams : List<Team>
+  +GetTeam(id : int) : Team
+  +RegisterHero(hero : HeroController) : void
+  +UnregisterHero(hero : HeroController) : void
+  +RegisterCastle(castle : Castle) : void
+  +UnregisterCastle(castle : Castle) : void
+  +RegisterMine(mine : Mine) : void
+  +UnregisterMine(mine : Mine) : void
+}
+class LR3PolymorphismDemo {
+  +hero : HeroController
+  +objects : List<MapObject>
+  +RunDemo() : void
+}
+class GridStat {
+  +castle : Castle
+}
+class HeroStats
+class HeroInventory
+class HeroArmy <<existing component>>
+
+MapObject <|-- ResourceObject
+MapObject <|-- NeutralArmy
+MapObject <|-- TeamOwnedObject
+TeamOwnedObject <|-- Castle
+TeamOwnedObject <|-- Mine
+MapObject ..> HeroController : Interact(hero)
+HeroController ..> MapObject : mapObject.Interact(this)
+LR3PolymorphismDemo --> "0..*" MapObject : objects (base type)
+LR3PolymorphismDemo ..> HeroController : hero argument
+TeamManager --> "0..*" Team : teams / registration
+Team "0..1" o-- "0..*" HeroController : heroes
+Team "0..1" o-- "0..*" Castle : castles
+Team "0..1" o-- "0..*" Mine : mines
+HeroController *-- HeroStats : stats
+HeroController *-- HeroInventory : inventory
+HeroController --> HeroArmy : existing army reference
+GridStat --> "0..1" Castle : entrance link
+Castle --> GridStat : entrance
+Castle ..> TeamManager : RegisterCastle / UnregisterCastle
+Mine ..> TeamManager : RegisterMine / UnregisterMine
+ResourceObject ..> TeamManager : GetTeam / add gold
+
+note right of MapObject
+  Abstract contract; TeamOwnedObject inherits it.
+  Four concrete classes override Interact(hero).
+  Dispatch uses the runtime object type.
+end note
+note bottom of LR3PolymorphismDemo
+  ContextMenu only, in Play Mode:
+  foreach (MapObject obj in objects)
+      obj.Interact(hero);
+  Uses real effects; run in a separate test scene.
+end note
+note bottom of NeutralArmy
+  Safe encounter message only.
+  No overworld-to-battle handoff exists yet.
+end note
+note bottom of HeroController
+  Resolve castle entrance first, then child MapObject.
+  Call Interact once through the MapObject reference.
+end note
+@enduml

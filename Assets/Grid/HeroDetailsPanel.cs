@@ -42,6 +42,12 @@ public class HeroDetailsPanel : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        if (instance == null)
+            instance = this;
+    }
+
     private void OnDestroy()
     {
         if (instance == this)

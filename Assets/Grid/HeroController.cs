@@ -260,16 +260,12 @@ public class HeroController : MonoBehaviour
             gridX = targetTile.x;
             gridY = targetTile.y;
 
-            MapObject mapObject = targetTile.GetComponentInChildren<MapObject>();
-
-            if (targetTile.castle != null)
-            {
-                targetTile.castle.Interact(this);
-            }
-            else if (mapObject != null)
-            {
+            // The entrance link takes priority even when the castle sprite is on another tile.
+            MapObject mapObject = targetTile.castle;
+            if (mapObject == null)
+                mapObject = targetTile.GetComponentInChildren<MapObject>();
+            if (mapObject != null)
                 mapObject.Interact(this);
-            }
             
             pathIndex++;
         }

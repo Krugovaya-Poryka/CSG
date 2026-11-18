@@ -88,10 +88,38 @@ public class BattleSetup : MonoBehaviour
             Debug.Log($"Створюємо {slot.unitData.name} ({slot.count} шт) на гексі [{targetColumn}, {row}]");
 
             GameObject unitObj = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
-            BattleUnit bUnit = unitObj.GetComponent<BattleUnit>();
+
+            // Забираємо всі посилання зі старого BattleUnit на префабі, щоб нічого не загубилось
+            BattleUnit templateUnit = unitObj.GetComponent<BattleUnit>();
+            var savedDamageText = templateUnit != null ? templateUnit.damageTextPrefab : null;
+            var savedSprite = templateUnit != null ? templateUnit.unitSprite : null;
+            var savedTexture = templateUnit != null ? templateUnit.textureChild : null;
+            var savedStackText = templateUnit != null ? templateUnit.stackText : null;
+            var savedStackBg = templateUnit != null ? templateUnit.stackBgImage : null;
+            var savedPlayerColor = templateUnit != null ? templateUnit.playerColor : new Color(24f / 255f, 113f / 255f, 202f / 255f, 1f);
+            var savedEnemyColor = templateUnit != null ? templateUnit.enemyColor : new Color(195f / 255f, 19f / 255f, 19f / 255f, 1f);
+
+            if (templateUnit != null)
+            {
+                Destroy(templateUnit);
+            }
+
+            BattleUnit bUnit;
+            if (slot.unitData.isRanged)
+                bUnit = unitObj.AddComponent<RangedBattleUnit>();
+            else
+                bUnit = unitObj.AddComponent<MeleeBattleUnit>();
 
             if (bUnit != null)
             {
+                bUnit.damageTextPrefab = savedDamageText;
+                bUnit.unitSprite = savedSprite;
+                bUnit.textureChild = savedTexture;
+                bUnit.stackText = savedStackText;
+                bUnit.stackBgImage = savedStackBg;
+                bUnit.playerColor = savedPlayerColor;
+                bUnit.enemyColor = savedEnemyColor;
+
                 bUnit.Init(slot.unitData, slot.count, teamId);
                 bUnit.hexCoords = new Vector2Int(targetColumn, row);
             }
@@ -100,10 +128,12 @@ public class BattleSetup : MonoBehaviour
             {
                 bUnit.FaceTarget(bUnit.transform.position + Vector3.left);
 
-                if (unitObj.GetComponent<AIUnit>() == null)
+                AIUnit ai = unitObj.GetComponent<AIUnit>();
+                if (ai == null)
                 {
-                    unitObj.AddComponent<AIUnit>();
+                    ai = unitObj.AddComponent<AIUnit>();
                 }
+                ai.BindBattleUnit(bUnit);
             }
 
             if (turnManager != null)

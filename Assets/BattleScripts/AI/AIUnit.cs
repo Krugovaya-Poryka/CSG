@@ -23,8 +23,36 @@ public class AIUnit : MonoBehaviour
 
     private void Awake()
     {
-        myUnit = GetComponent<BattleUnit>();
+        ResolveMyUnit();
         gridManager = FindAnyObjectByType<HexGridManager>();
+    }
+
+    public void BindBattleUnit(BattleUnit unit)
+    {
+        if (unit != null)
+        {
+            myUnit = unit;
+        }
+    }
+
+    private void ResolveMyUnit()
+    {
+        if (myUnit != null && myUnit.data != null) return;
+
+        BattleUnit[] units = GetComponents<BattleUnit>();
+        foreach (var u in units)
+        {
+            if (u != null && u.data != null)
+            {
+                myUnit = u;
+                return;
+            }
+        }
+
+        if (myUnit == null && units.Length > 0)
+        {
+            myUnit = units[0];
+        }
     }
 
     // Заміна конструктора для MonoBehaviour: викликається менеджером після AddComponent
@@ -53,6 +81,7 @@ public class AIUnit : MonoBehaviour
 
     public bool IsAlive()
     {
+        ResolveMyUnit();
         return myUnit != null && myUnit.stackSize > 0;
     }
 
@@ -76,7 +105,9 @@ public class AIUnit : MonoBehaviour
     /// </summary>
     public void MakeAutonomousDecision(List<BattleUnit> allUnits, Action onTurnComplete)
     {
-        if (!IsAlive())
+        ResolveMyUnit();
+
+        if (!IsAlive() || myUnit == null || myUnit.data == null)
         {
             onTurnComplete?.Invoke();
             return;
@@ -100,7 +131,7 @@ public class AIUnit : MonoBehaviour
             return;
         }
 
-        // 2. ЛР3: вибір цілі делегується стратегії (раніше завжди найближчий ворог)
+        // 2. ЛР3: вибір цілі делегується стратегії
         TargetCandidate chosen = Strategy.ChooseTarget(BuildCandidates(enemies));
         BattleUnit target = chosen != null ? chosen.Unit : null;
         if (target == null)
@@ -112,26 +143,26 @@ public class AIUnit : MonoBehaviour
         int distance = HexUtils.GetHexDistance(myUnit.hexCoords, target.hexCoords);
         bool isEnemyAdjacent = CheckIfEnemyIsAdjacent(allUnits);
 
-        // --- ВАРІАНТ A: Дальній бій ---
-        if (myUnit.data.isRanged && myUnit.currentShots > 0 && !isEnemyAdjacent && distance > 1)
+        // --- ПОЛІМОРФНА АТАКА БЕЗ ПЕРЕМІЩЕННЯ (стрільба або удар впритул через базовий клас) ---
+        if (myUnit.CanAttackWithoutMoving(target, distance, isEnemyAdjacent))
         {
-            myUnit.RangedAttack(target, () => onTurnComplete?.Invoke());
+            myUnit.PerformAttack(target, () => onTurnComplete?.Invoke());
             return;
         }
 
-        // --- ВАРІАНТ Б: Ближній бій упритул ---
-        if (distance == 1)
-        {
-            myUnit.MeleeAttack(target, () => onTurnComplete?.Invoke());
-            return;
-        }
-
-        // --- ВАРІАНТ В: Переміщення по гексах + Атака або Крок убік ворога ---
+        // --- АТАКА З ПЕРЕМІЩЕННЯМ ПО ГЕКСАХ ---
         ExecuteMoveAndAttack(target, allUnits, onTurnComplete);
     }
 
     private void ExecuteMoveAndAttack(BattleUnit target, List<BattleUnit> allUnits, Action onTurnComplete)
     {
+        ResolveMyUnit();
+        if (myUnit == null || myUnit.data == null)
+        {
+            onTurnComplete?.Invoke();
+            return;
+        }
+
         HashSet<Vector2Int> blockedHexes = GetBlockedHexes(allUnits);
 
         // Пошук досяжних гексів з урахуванням швидкості та типу юніта (літаючий/наземний)
@@ -146,7 +177,7 @@ public class AIUnit : MonoBehaviour
 
         if (bestAttackCoords.HasValue)
         {
-            // Рух до сусіднього з ворогом гекса + ближній удар
+            // Рух до сусіднього з ворогом гекса + поліморфний удар
             Vector2Int targetCoords = bestAttackCoords.Value;
             List<Vector2Int> pathCoords = HexPathfinding.ReconstructPath(
                 myUnit.hexCoords, targetCoords, pathMap, myUnit.data.isFlyer
@@ -156,7 +187,7 @@ public class AIUnit : MonoBehaviour
 
             StartCoroutine(myUnit.MoveAlongPath(pathHexes, targetCoords, () =>
             {
-                myUnit.MeleeAttack(target, () => onTurnComplete?.Invoke());
+                myUnit.PerformAttack(target, () => onTurnComplete?.Invoke());
             }));
         }
         else
@@ -183,7 +214,6 @@ public class AIUnit : MonoBehaviour
     }
 
     // ЛР3: перетворює ворогів на прості дані для стратегії
-    // (потужність = розмір стеку, відстань = у гексах)
     private List<TargetCandidate> BuildCandidates(List<BattleUnit> enemies)
     {
         List<TargetCandidate> list = new List<TargetCandidate>();

@@ -55,9 +55,7 @@ public class TurnManager : MonoBehaviour
             BattleLogUI.Instance.LogTurn(activeUnit);
         }
 
-        // =========================================================
-        // ÏÅÐÅÂ²ÐÊÀ: ßêùî õ³ä íàëåæèòü Ø² (teamId == 1)
-        // =========================================================
+        // ßêùî õ³ä íàëåæèòü Ø² (teamId == 1)
         if (activeUnit.teamId == 1)
         {
             // Îòðèìóºìî êîìïîíåíò AIUnit ç îá'ºêòà àáî ç AIManager
@@ -166,5 +164,68 @@ public class TurnManager : MonoBehaviour
         // activeUnit.ApplyDefenseBuff();
 
         EndTurn();
+    }
+
+    public void RestoreActiveUnit(BattleUnit targetActiveUnit)
+    {
+        // Ïðèáèðàºìî null àáî þí³ò³â ç 0 ñòåêîì
+        allUnits.RemoveAll(u => u == null || u.stackSize <= 0);
+
+        // Ãàðàíòóºìî, ùî âñ³ æèâ³ þí³òè ç registeredUnits ïðèñóòí³ â allUnits
+        if (registeredUnits != null)
+        {
+            foreach (var regUnit in registeredUnits)
+            {
+                if (regUnit != null && regUnit.stackSize > 0 && !allUnits.Contains(regUnit))
+                {
+                    allUnits.Add(regUnit);
+                }
+            }
+        }
+
+        SortUnitsBySpeed();
+
+        if (allUnits.Count == 0)
+        {
+            activeUnit = null;
+            currentUnitIndex = 0;
+            return;
+        }
+
+        if (targetActiveUnit != null && targetActiveUnit.stackSize > 0)
+        {
+            if (!allUnits.Contains(targetActiveUnit))
+            {
+                allUnits.Add(targetActiveUnit);
+            }
+            currentUnitIndex = Mathf.Max(0, allUnits.IndexOf(targetActiveUnit));
+            activeUnit = allUnits[currentUnitIndex];
+        }
+        else
+        {
+            currentUnitIndex = 0;
+            activeUnit = allUnits[0];
+        }
+
+        if (BattleLogUI.Instance != null)
+        {
+            BattleLogUI.Instance.LogTurn(activeUnit);
+        }
+
+        if (activeUnit.teamId == 1)
+        {
+            AIUnit aiLogic = activeUnit.GetComponent<AIUnit>();
+            if (aiLogic != null && aiLogic.IsAlive())
+            {
+                aiLogic.MakeAutonomousDecision(allUnits, () =>
+                {
+                    Invoke(nameof(EndTurn), 1.0f);
+                });
+            }
+            else
+            {
+                EndTurn();
+            }
+        }
     }
 }

@@ -28,7 +28,6 @@ public class BattleInputHandler : MonoBehaviour
     {
         if (turnManager == null || gridManager == null) return;
 
-        // Якщо немає активного юніта (бій закінчено) — вимикаємо підсвітку
         if (turnManager.activeUnit == null || turnManager.allUnits.Count == 0)
         {
             if (currentPathMap != null || currentActiveUnit != null)
@@ -40,7 +39,6 @@ public class BattleInputHandler : MonoBehaviour
             return;
         }
 
-        // При зміні активного юніта оновлюємо область ходу та підсвічування
         if (turnManager.activeUnit != currentActiveUnit && !isProcessingAction)
         {
             currentActiveUnit = turnManager.activeUnit;
@@ -49,10 +47,9 @@ public class BattleInputHandler : MonoBehaviour
 
         if (isProcessingAction) return;
 
-        // --- ОБРОБКА КЛАВІАТУРИ (Тільки для юнітів гравця teamId == 0) ---
+        // ОБРОБКА КЛАВІАТУРИ
         if (Keyboard.current != null && turnManager.activeUnit != null && turnManager.activeUnit.teamId == 0)
         {
-            // 1. Клавіша W — Перенести в кінець черги (Wait)
             if (Keyboard.current.wKey.wasPressedThisFrame)
             {
                 if (!turnManager.activeUnit.hasWaited)
@@ -70,7 +67,6 @@ public class BattleInputHandler : MonoBehaviour
                 }
             }
 
-            // 2. Клавіша Space — Пропустити хід / Захист
             if (Keyboard.current.spaceKey.wasPressedThisFrame)
             {
                 ClearHighlights();
@@ -82,7 +78,6 @@ public class BattleInputHandler : MonoBehaviour
         // Обробка кліку миші
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
-            // ЗАХИСТ ВІД КЛІКІВ КРІЗЬ UI: якщо курсор над кнопкою чи вікном — ігноруємо клік по гексу!
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
                 return;
@@ -102,31 +97,25 @@ public class BattleInputHandler : MonoBehaviour
                 if (clickedHex == null) clickedHex = hit.collider.GetComponent<BattleHex>();
             }
 
-            // Якщо клікнули по гексу, де стоїть юніт
             if (clickedUnit == null && clickedHex != null)
             {
                 Vector2Int hexCoords = new Vector2Int(clickedHex.x, clickedHex.y);
                 clickedUnit = GetUnitAtHex(hexCoords);
             }
 
-            // --- КЛІК ПО ВОРОГУ ---
+            // --- КЛІК ПО ВОРОГУ (ПОВНІСТЮ ПОЛІМОРФНИЙ ПІДХІД) ---
             if (clickedUnit != null && clickedUnit.teamId != turnManager.activeUnit.teamId && clickedUnit.stackSize > 0)
             {
                 BattleUnit attacker = turnManager.activeUnit;
                 int distance = HexUtils.GetHexDistance(attacker.hexCoords, clickedUnit.hexCoords);
                 bool isEnemyAdjacent = CheckIfEnemyIsAdjacent(attacker);
 
-                // 1. Дальній бій (лише якщо є постріли, НЕМАЄ ворога упритул і відстань > 1)
-                if (attacker.data.isRanged && attacker.currentShots > 0 && !isEnemyAdjacent && distance > 1)
+                // Поліморфна перевірка: чи може юніт атакувати безпосередньо з поточного місця
+                if (attacker.CanAttackWithoutMoving(clickedUnit, distance, isEnemyAdjacent))
                 {
-                    ExecuteAction(() => attacker.RangedAttack(clickedUnit, OnActionComplete));
+                    ExecuteAction(() => attacker.PerformAttack(clickedUnit, OnActionComplete));
                 }
-                // 2. Ближній бій упритул (дистанція = 1)
-                else if (distance == 1)
-                {
-                    ExecuteAction(() => attacker.MeleeAttack(clickedUnit, OnActionComplete));
-                }
-                // 3. Ближній бій з підходом (переміщення по сітці + удар)
+                // Атака з підходом (переміщення по сітці до позиції удару + поліморфна атака)
                 else
                 {
                     Vector2Int? attackHexCoords = GetBestAttackHex(attacker, clickedUnit);
@@ -146,7 +135,7 @@ public class BattleInputHandler : MonoBehaviour
 
                         ExecuteAction(() => {
                             StartCoroutine(attacker.MoveAlongPath(pathHexes, targetCoords, () => {
-                                attacker.MeleeAttack(clickedUnit, OnActionComplete);
+                                attacker.PerformAttack(clickedUnit, OnActionComplete);
                             }));
                         });
                     }
@@ -230,7 +219,7 @@ public class BattleInputHandler : MonoBehaviour
     {
         ClearHighlights();
         if (currentActiveUnit.teamId == 1 || currentActiveUnit == null || currentActiveUnit.stackSize <= 0) return;
-        // ПІДСВІЧУЄМО ТІЛЬКИ ЯКЩО ХОДИТЬ ЮНІТ ГРАВЦЯ (teamId == 0)
+
         HashSet<Vector2Int> blockedHexes = new HashSet<Vector2Int>();
 
         BattleHex[] allHexes = FindObjectsByType<BattleHex>();
@@ -253,7 +242,6 @@ public class BattleInputHandler : MonoBehaviour
 
         currentPathMap = HexPathfinding.FindReachableArea(start, speed, isFlyer, blockedHexes);
 
-        // 1. Сірі гекси під доступними порожніми клітинками для переміщення
         foreach (var hex in allHexes)
         {
             Vector2Int hexCoords = new Vector2Int(hex.x, hex.y);
@@ -266,11 +254,9 @@ public class BattleInputHandler : MonoBehaviour
             }
         }
 
-        // 2. Зелений гекс під самісіньким activeUnit
         GameObject activeHex = gridManager.gridArray[start.x, start.y];
         SetHexColor(activeHex, activePlayerColor);
 
-        // 3. Червоні гекси під ворогами, яких можна атакувати
         List<BattleUnit> attackableTargets = GetAttackableTargets(currentActiveUnit);
         foreach (var target in attackableTargets)
         {
@@ -286,33 +272,17 @@ public class BattleInputHandler : MonoBehaviour
 
         bool isBlockedByEnemy = CheckIfEnemyIsAdjacent(attacker);
 
-        // Дальнобійник може стріляти, лише якщо немає ворога упритул і є набої
-        bool canShoot = attacker.data.isRanged && attacker.currentShots > 0 && !isBlockedByEnemy;
-
         foreach (var enemy in turnManager.allUnits)
         {
             if (enemy == null || enemy.stackSize <= 0 || enemy.teamId == attacker.teamId)
                 continue;
 
-            if (canShoot)
+            int dist = HexUtils.GetHexDistance(attacker.hexCoords, enemy.hexCoords);
+
+            // Використовуємо поліморфний метод замість прямих перевірок на isRanged
+            if (attacker.CanAttackWithoutMoving(enemy, dist, isBlockedByEnemy) || GetBestAttackHex(attacker, enemy) != null)
             {
-                // Якщо не заблокований — бачить і може обстріляти будь-кого
                 targets.Add(enemy);
-            }
-            else
-            {
-                // Якщо заблокований або це мілішник:
-                int dist = HexUtils.GetHexDistance(attacker.hexCoords, enemy.hexCoords);
-                // 1. Ворог стоїть упритул
-                if (dist == 1)
-                {
-                    targets.Add(enemy);
-                }
-                // 2. Або ми можемо дойти до нього за цей хід для удару
-                else if (GetBestAttackHex(attacker, enemy) != null)
-                {
-                    targets.Add(enemy);
-                }
             }
         }
 
@@ -344,7 +314,7 @@ public class BattleInputHandler : MonoBehaviour
         }
     }
 
-    public void ClearHighlights()
+    private void ClearHighlights()
     {
         foreach (var pair in originalColors)
         {
@@ -384,5 +354,19 @@ public class BattleInputHandler : MonoBehaviour
             }
         }
         return false;
+    }
+
+    public void RefreshAfterLoad()
+    {
+        isProcessingAction = false;
+        currentActiveUnit = null;
+        currentPathMap = null;
+        ClearHighlights();
+
+        if (turnManager != null && gridManager != null && turnManager.activeUnit != null && turnManager.activeUnit.stackSize > 0)
+        {
+            currentActiveUnit = turnManager.activeUnit;
+            HighlightMoveArea();
+        }
     }
 }

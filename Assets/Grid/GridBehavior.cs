@@ -314,6 +314,9 @@ public class GridBehavior : MonoBehaviour
         if (resourcePrefab == null)
             return;
         System.Random rng = new System.Random(seed + 777);
+        HashSet<Vector2Int> heroTiles = new HashSet<Vector2Int>();
+        foreach (HeroController hero in FindObjectsByType<HeroController>())
+            if (hero.grid == this) heroTiles.Add(WorldToGrid(hero.transform.position));
 
         for (int x = 0; x < columns; x++)
         {
@@ -324,7 +327,7 @@ public class GridBehavior : MonoBehaviour
 
                 GridStat tile = GetTile(x, y);
 
-                if (tile == null)
+                if (tile == null || heroTiles.Contains(new Vector2Int(x, y)))
                     continue;
 
                 if (!tile.walkable)
@@ -543,7 +546,7 @@ public class GridBehavior : MonoBehaviour
 
                     GridStat vertical = GetTile(tile.x, tile.y + offsetY);
 
-                    if (horizontal == null || vertical == null || !horizontal.walkable || !vertical.walkable)
+                    if (horizontal == null || vertical == null || !horizontal.IsTraversable || !vertical.IsTraversable)
                     {
                         continue;
                     }

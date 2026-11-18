@@ -66,7 +66,7 @@ public class MouseController : MonoBehaviour
 
             Debug.Log("TILE CLICKED: " + tile.x + ", " + tile.y);
 
-            if (!tile.walkable)
+            if (!tile.IsTraversable && tile.resource == null)
             {
                 Debug.Log("Tile is not walkable");
                 return;

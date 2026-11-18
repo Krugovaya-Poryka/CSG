@@ -28,7 +28,7 @@ public static class Pathfinder
         if (startTile == null || targetTile == null)
             return null;
 
-        if (!targetTile.walkable)
+        if (!targetTile.IsTraversable)
             return null;
 
         List<Node> openList = new List<Node>();
@@ -66,7 +66,7 @@ public static class Pathfinder
                 if (neighbour == null)
                     continue;
 
-                if (!neighbour.walkable)
+                if (!neighbour.IsTraversable)
                     continue;
 
                 if (closedSet.Contains(neighbour))

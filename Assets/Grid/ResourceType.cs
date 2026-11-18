@@ -6,12 +6,12 @@ public enum ResourceType { Gold, Wood, Ore, Mercury, Sulfur, Crystal, Gems }
 public static class ResourceCatalog
 {
     public const int Count = 7;
-    private static readonly string[] Names = { "Золото", "Дерево", "Руда", "Ртуть", "Сірка", "Кристали", "Самоцвіти" };
+    private static readonly string[] Names = { "Gold", "Wood", "Ore", "Mercury", "Sulfur", "Crystal", "Gems" };
     private static readonly string[] Files = { "gold", "wood", "ore", "mercury", "sulfur", "crystal", "gems" };
     private static readonly Sprite[] Icons = new Sprite[Count];
 
     public static bool IsValid(ResourceType type) => (int)type >= 0 && (int)type < Count;
-    public static string GetName(ResourceType type) => IsValid(type) ? Names[(int)type] : "Ресурс";
+    public static string GetName(ResourceType type) => IsValid(type) ? Names[(int)type] : "Resource";
 
     public static Sprite GetSprite(ResourceType type)
     {

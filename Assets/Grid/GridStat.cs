@@ -14,6 +14,8 @@ public class GridStat : MonoBehaviour
     public GameObject castlePrefab;
     // Runtime link from the walkable entrance to the castle at the footprint centre.
     [System.NonSerialized] public Castle castle;
+    [System.NonSerialized] public ResourceObject resource;
+    public bool IsTraversable => walkable && (resource == null || resource.IsCollected);
 
     public enum TileType
     {

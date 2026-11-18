@@ -12,6 +12,11 @@ public class Castle : TeamOwnedObject
             TeamManager.Instance.RegisterCastle(this);
     }
 
+    private void OnEnable()
+    {
+        if (entrance != null) entrance.castle = this;
+    }
+
     private void OnDestroy()
     {
         if (entrance != null && entrance.castle == this)

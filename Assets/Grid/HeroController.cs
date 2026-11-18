@@ -8,6 +8,7 @@ public class HeroController : MonoBehaviour
     public GameObject pathMarkerPrefab;
     
     private GridStat previewTarget;
+    private ResourceObject pendingResource;
     
     public int teamId;
     
@@ -78,6 +79,18 @@ public class HeroController : MonoBehaviour
         Debug.Log("PREVIEW: " + target.x + ", " + target.y);
         UpdateGridPosition();
 
+        ResourceObject resource = target.resource;
+        if (resource != null && resource.CanCollect(this))
+        {
+            ClearPathMarkers();
+            previewTarget = null;
+            currentPath = null;
+            pendingResource = null;
+            MapObject interaction = resource;
+            interaction.Interact(this);
+            return;
+        }
+
         if (previewTarget == target && currentPath != null)
         {
             ClearPathMarkers();
@@ -89,7 +102,12 @@ public class HeroController : MonoBehaviour
 
         ClearPathMarkers();
 
-        List<GridStat> path = Pathfinder.FindPath(grid, gridX, gridY, target.x, target.y);
+        previewTarget = null;
+        currentPath = null;
+        pendingResource = null;
+        List<GridStat> path = resource != null && !resource.IsCollected
+            ? FindResourceApproachPath(resource)
+            : Pathfinder.FindPath(grid, gridX, gridY, target.x, target.y);
         
         Debug.Log("PATH COUNT: " + (path == null ? -1 : path.Count));
         
@@ -98,6 +116,7 @@ public class HeroController : MonoBehaviour
 
         previewTarget = target;
         currentPath = path;
+        pendingResource = resource;
 
         int points = movementPoints;
 
@@ -173,6 +192,31 @@ public class HeroController : MonoBehaviour
             previous = tile;
         }
     }
+    private List<GridStat> FindResourceApproachPath(ResourceObject resource)
+    {
+        if (resource.Tile == null) return null;
+        List<GridStat> best = null;
+        int bestCost = int.MaxValue;
+        foreach (GridStat approach in grid.GetNeighbours(resource.Tile))
+        {
+            if (!approach.IsTraversable || !resource.CanCollectFrom(approach)) continue;
+            List<GridStat> path = Pathfinder.FindPath(grid, gridX, gridY, approach.x, approach.y);
+            if (path == null || path.Count == 0) continue;
+            int cost = 0;
+            GridStat previous = grid.GetTile(gridX, gridY);
+            foreach (GridStat step in path) { cost += GetMovementCost(previous, step); previous = step; }
+            if (cost < bestCost) { best = path; bestCost = cost; }
+        }
+        return best;
+    }
+
+    private void CollectPendingResource()
+    {
+        MapObject interaction = pendingResource;
+        pendingResource = null;
+        if (interaction != null) interaction.Interact(this);
+    }
+
     private void ClearPathMarkers()
     {
         foreach (GameObject marker in pathMarkers)
@@ -203,6 +247,7 @@ public class HeroController : MonoBehaviour
 
         foreach (GridStat tile in path)
         {
+            if (tile == null || !tile.IsTraversable) break;
             int cost = GetMovementCost(previous, tile);
 
             if (remaining < cost)
@@ -239,8 +284,9 @@ public class HeroController : MonoBehaviour
         }
 
         GridStat targetTile = currentPath[pathIndex];
-        if (targetTile == null)
+        if (targetTile == null || !targetTile.IsTraversable)
         {
+            pendingResource = null;
             moving = false;
             return;
         }
@@ -268,6 +314,7 @@ public class HeroController : MonoBehaviour
                 mapObject.Interact(this);
             
             pathIndex++;
+            if (pathIndex >= currentPath.Count) CollectPendingResource();
         }
     }
 

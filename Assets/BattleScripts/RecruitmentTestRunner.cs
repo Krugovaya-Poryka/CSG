@@ -4,25 +4,37 @@ public class RecruitmentTestRunner : MonoBehaviour
 {
     private void Start()
     {
-        Debug.Log("=== ТЕСТУВАННЯ СИСТЕМИ НАЙМУ ТА ГЕРОЇВ  ===");
+        Debug.Log("=== ТЕСТУВАННЯ ЛР№3: СИСТЕМА НАЙМУ (НАСЛІДУВАННЯ ТА ПОЛІМОРФІЗМ) ===");
 
-        // 1. Створюємо систему найму з 1500 золота
-        RecruitmentSystem recruitment = new RecruitmentSystem(1500);
+        // 1. Створюємо систему найму із 2500 золота
+        RecruitmentSystem recruitment = new RecruitmentSystem(2500);
 
-        // 2. Показуємо початковий каталог доступних військ у списку List<T>
-        recruitment.ShowTroopsCatalog();
+        // 2. Виводимо початковий каталог
+        recruitment.ShowCatalog();
 
-        // 3. Пробуємо найняти 3 мечників (індекс 0 у списку: 3 * 100 = 300 золота)
-        recruitment.HireTroops(0, 3);
+        // 3. ДЕМОНСТРАЦІЯ ПОЛІМОРФІЗМУ
+        Debug.Log("\n--- ПЕРЕВІРКА ПОЛІМОРФІЗМУ НАЙМУ ---");
+        recruitment.TestRecruitPolymorphism(0); // Мечник (TroopUnit)
+        recruitment.TestRecruitPolymorphism(2); // Герой Артур (HeroUnit)
 
-        // 4. Пробуємо найняти героя "Артур" (1000 золота)
-        recruitment.HireHero("Артур");
+        // 4. ДЕМОНСТРАЦІЯ НАЙМУ
+        Debug.Log("\n--- ВИКОНАННЯ НАЙМУ ---");
+        recruitment.HireTroops(0, 3); // Найм 3 мечників (індекс 0)
+        recruitment.HireHero(2);       // Найм героя Артура (індекс 2)
 
-        // 5. Пробуємо найняти 5 лучників (індекс 1 у списку: 5 * 150 = 750 золота)
-        // На цей момент у гравця залишилося 200 золота, тому система виведе помилку про недостачу коштів!
-        recruitment.HireTroops(1, 5);
+        // 5. ДЕМОНСТРАЦІЯ СОРТУВАННЯ
+        Debug.Log("\n--- ПЕРЕВІРКА СОРТУВАННЯ ЗА ЦІНОЮ ---");
+        recruitment.SortRecruitsByPrice();
 
-        // 6. Закриваємо систему найму та очищуємо пам'ять
+        // 6. ДЕМОНСТРАЦІЯ ПОШУКУ
+        Debug.Log("\n--- ПЕРЕВІРКА ПОШУКУ (до 200 золота) ---");
+        recruitment.SearchRecruitsByMaxPrice(200);
+
+        // 7. ЗБЕРЕЖЕННЯ ДАНИХ
+        Debug.Log("\n--- ПЕРЕВІРКА ЗБЕРЕЖЕННЯ СТАНУ ---");
+        recruitment.SaveRecruitmentState();
+
+        // 8. Закриття системи
         recruitment.CloseRecruitment();
         recruitment = null;
     }

@@ -13,15 +13,15 @@ public class HexGridManager : MonoBehaviour
     public float hexHeight = 1.0f;
 
     [Header("Перешкоди")]
-    public Sprite[] obstacleSprites; // Перетягніть сюди спрайти каменів/дерев в Inspector
-    int obstacleCount = 0;     // Кількість перешкод на полі
+    public Sprite[] obstacleSprites;
+    int obstacleCount = 0;
 
     public GameObject[,] gridArray;
 
     [Header("Налаштування сітки ліній")]
-    public Color gridLineColor = new Color(0f, 0f, 0f, 1f); // Колір сітки
-    public float gridLineWidth = 0.05f;                       // Товщина лінії
-    public Material lineMaterial;                             // Матеріал (наприклад, Sprites/Default)
+    public Color gridLineColor = new Color(0f, 0f, 0f, 1f);
+    public float gridLineWidth = 0.05f;
+    public Material lineMaterial;
 
     void Awake()
     {  
@@ -51,11 +51,9 @@ public class HexGridManager : MonoBehaviour
                     Vector2 p1 = corners[i];
                     Vector2 p2 = corners[(i + 1) % 6];
 
-                    // Округлюємо координати для виключення помилок float
                     Vector2Int ip1 = new Vector2Int(Mathf.RoundToInt(p1.x * 1000f), Mathf.RoundToInt(p1.y * 1000f));
                     Vector2Int ip2 = new Vector2Int(Mathf.RoundToInt(p2.x * 1000f), Mathf.RoundToInt(p2.y * 1000f));
 
-                    // Канонічний ключ відрізка (p1 завжди "менше" p2)
                     var edgeKey = (ip1.x < ip2.x || (ip1.x == ip2.x && ip1.y < ip2.y))
                         ? (ip1, ip2)
                         : (ip2, ip1);

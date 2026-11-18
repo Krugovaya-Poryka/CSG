@@ -50,7 +50,7 @@ public static class HexPathfinding
             foreach (Vector2Int next in GetNeighbors(current))
             {
                 // Наземні юніти не можуть проходити крізь перешкоди/юнітів.
-                // Літаючі юніти ігнорують перешкоди ПІД ЧАС переміщення.
+                // Літаючі юніти ігнорують перешкоди під час переміщення.
                 if (!isFlyer && blockedHexes.Contains(next)) continue;
 
                 int newCost = costSoFar[current] + 1;

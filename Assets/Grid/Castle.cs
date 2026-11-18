@@ -32,11 +32,11 @@ public class Castle : TeamOwnedObject
             teamId = hero.teamId;
             if (TeamManager.Instance != null)
                 TeamManager.Instance.RegisterCastle(this);
-            Debug.Log("Castle captured!");
+            Debug.Log("Castle.Interact: Castle captured!", this);
         }
         else
         {
-            Debug.Log("Opened own castle");
+            Debug.Log("Castle.Interact: Opened own castle", this);
         }
     }
 }

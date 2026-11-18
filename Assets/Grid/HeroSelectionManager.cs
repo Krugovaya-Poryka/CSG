@@ -16,6 +16,12 @@ public class HeroSelectionManager : MonoBehaviour
         Instance = this;
     }
 
+    private void OnEnable()
+    {
+        // Restore the static reference after an Editor script reload.
+        Instance = this;
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)

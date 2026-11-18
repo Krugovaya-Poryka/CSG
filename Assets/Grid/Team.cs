@@ -9,6 +9,7 @@ public class Team
 
     public List<HeroController> heroes = new List<HeroController>();
     public List<Castle> castles = new List<Castle>();
+    public List<Mine> mines = new List<Mine>();
 
     public int gold;
     public int wood;

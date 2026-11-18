@@ -229,8 +229,8 @@ public class BattleInputHandler : MonoBehaviour
     private void HighlightMoveArea()
     {
         ClearHighlights();
-        if (currentActiveUnit == null || currentActiveUnit.stackSize <= 0) return;
-
+        if (currentActiveUnit.teamId == 1 || currentActiveUnit == null || currentActiveUnit.stackSize <= 0) return;
+        // ПІДСВІЧУЄМО ТІЛЬКИ ЯКЩО ХОДИТЬ ЮНІТ ГРАВЦЯ (teamId == 0)
         HashSet<Vector2Int> blockedHexes = new HashSet<Vector2Int>();
 
         BattleHex[] allHexes = FindObjectsByType<BattleHex>();
@@ -253,7 +253,7 @@ public class BattleInputHandler : MonoBehaviour
 
         currentPathMap = HexPathfinding.FindReachableArea(start, speed, isFlyer, blockedHexes);
 
-        // Сірі гекси під доступними порожніми клітинками для переміщення
+        // 1. Сірі гекси під доступними порожніми клітинками для переміщення
         foreach (var hex in allHexes)
         {
             Vector2Int hexCoords = new Vector2Int(hex.x, hex.y);
@@ -266,20 +266,16 @@ public class BattleInputHandler : MonoBehaviour
             }
         }
 
-        // ПІДСВІЧУЄМО ТІЛЬКИ ЯКЩО ХОДИТЬ ЮНІТ ГРАВЦЯ (teamId == 0)
-        if (currentActiveUnit.teamId == 0)
-        {
-            // 1. Зелений гекс під самісіньким activeUnit
-            GameObject activeHex = gridManager.gridArray[start.x, start.y];
-            SetHexColor(activeHex, activePlayerColor);
+        // 2. Зелений гекс під самісіньким activeUnit
+        GameObject activeHex = gridManager.gridArray[start.x, start.y];
+        SetHexColor(activeHex, activePlayerColor);
 
-            // 2. Червоні гекси під ворогами, яких можна атакувати
-            List<BattleUnit> attackableTargets = GetAttackableTargets(currentActiveUnit);
-            foreach (var target in attackableTargets)
-            {
-                GameObject targetHex = gridManager.gridArray[target.hexCoords.x, target.hexCoords.y];
-                SetHexColor(targetHex, enemyTargetColor);
-            }
+        // 3. Червоні гекси під ворогами, яких можна атакувати
+        List<BattleUnit> attackableTargets = GetAttackableTargets(currentActiveUnit);
+        foreach (var target in attackableTargets)
+        {
+            GameObject targetHex = gridManager.gridArray[target.hexCoords.x, target.hexCoords.y];
+            SetHexColor(targetHex, enemyTargetColor);
         }
     }
 
